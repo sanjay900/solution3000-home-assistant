@@ -1,8 +1,7 @@
 import socket
 import ssl
-import pprint
 from enum import Enum
-from pprint import pp
+import asyncio
 
 
 class UserType(Enum):
@@ -244,7 +243,6 @@ class Area(Component):
 
 class Panel():
     areas: list[Area]
-
     def __init__(self, port: int, ip: str, user_type: UserType, passcode: str, pincode: str) -> None:
         self.port = port
         self.ip = ip
@@ -264,15 +262,8 @@ class Panel():
         self.areas = []
         self.outputs = []
         self.doors = []
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        context.set_ciphers('DEFAULT')
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-        self.ssl_sock = context.wrap_socket(s)
-        self.ssl_sock.connect((ip, port))
 
-    def send_packet(self, command: Commands, command_format: list[int] = None, data: list[int] | bytearray = None):
+    async def _send_packet(self, command: Commands, command_format: list[int] = None, data: list[int] | bytearray = None):
         command_format = command_format or []
         data = data or []
         if not isinstance(data, bytearray):
@@ -281,13 +272,14 @@ class Panel():
         protocol = 0x01
         packet = bytearray([protocol, length, command.value]
                            ) + bytearray(command_format) + data
-        self.ssl_sock.write(packet)
+        self.writer.write(packet)
+        await self.writer.drain()
 
-    def receive_packet(self, expected_response: int) -> bytes:
-        protocol = self.ssl_sock.recv(1)[0]
+    async def _receive_packet(self, expected_response: int) -> bytes:
+        protocol = (await self.reader.read(1))[0]
         if protocol == 1:
-            length = self.ssl_sock.recv(1)[0]
-            data = self.ssl_sock.recv(length)
+            length = (await self.reader.read(1))[0]
+            data = await self.reader.read(length)
             if data[0] != expected_response:
                 if data[0] == 0xFD:
                     raise PanelException(NegativeAcknoledgement(data[1]))
@@ -297,9 +289,9 @@ class Panel():
         else:
             raise PanelException(f"Unexpected protocol {protocol}")
 
-    def send_what_are_you(self):
-        self.send_packet(Commands.WhatAreYou, [])
-        data = self.receive_packet(0xFE)
+    async def _send_what_are_you(self):
+        await self._send_packet(Commands.WhatAreYou, [])
+        data = await self._receive_packet(0xFE)
         self.panel_type = PanelType(data[1])
         self.rps_protocol_version = ProtocolVersion(
             data[2], data[3], data[4] + 255 * data[5])
@@ -313,15 +305,15 @@ class Panel():
         if flags == MaxConnectionsInUseFlags.MaxAutomationUsersInUse:
             raise PanelException("Max Automation Users In Use")
 
-    def authenticate(self):
+    async def _authenticate(self):
         if len(self.passcode) > 24 or len(self.passcode) < 6:
             raise PanelException("Invalid Passcode Length")
         if len(self.passcode) < 24:
             self.passcode += " "
         self.passcode = "\x00"+self.passcode
-        self.send_packet(Commands.Passcode, [],
+        await self._send_packet(Commands.Passcode, [],
                          bytearray(self.passcode, 'utf-8'))
-        data = self.receive_packet(0xFE)
+        data = await self._receive_packet(0xFE)
         if data[1] == 0:
             raise PanelException("Invalid App Passcode")
         if data[1] == 2:
@@ -331,16 +323,12 @@ class Panel():
             pincode_num = int(self.pincode, 16)
             pincode_low = pincode_num & 0xff
             pincode_high = (pincode_num >> 8) & 0xff
-            self.send_packet(Commands.Pincode, [], [pincode_high, pincode_low])
-            self.receive_packet(0xFE)
+            await self._send_packet(Commands.Pincode, [], [pincode_high, pincode_low])
+            await self._receive_packet(0xFE)
 
-    def arm(self, arm_type: ArmType, area: list[Area]):
-
-        self.send_packet(Commands.ArmPanelAreas, [], [arm_type.value, 0x80])
-
-    def req_capacities(self):
-        self.send_packet(Commands.ReqPanelCapacitie)
-        data = self.receive_packet(0xFE)
+    async def _req_capacities(self):
+        await self._send_packet(Commands.ReqPanelCapacitie)
+        data = await self._receive_packet(0xFE)
         self.max_areas = (data[2] * 255) + data[3]
         self.max_points = (data[4] * 255) + data[5]
         self.max_outputs = (data[6] * 255) + data[7]
@@ -348,11 +336,11 @@ class Panel():
         self.max_keypads = data[10]
         self.max_doors = data[11]
 
-    def req_data_with_text(self, read_type: Commands, read_type_data: list[int], read_name: Commands, max: int):
+    async def _req_data_with_text(self, read_type: Commands, read_type_data: list[int], read_name: Commands, max: int):
         out = []
         if max:
-            self.send_packet(read_type, [], read_type_data)
-            data = self.receive_packet(0xFE)
+            await self._send_packet(read_type, [], read_type_data)
+            data = await self._receive_packet(0xFE)
             mask = 0
             for i in range(len(data) - 1):
                 mask = mask << 8 | data[i + 1]
@@ -361,22 +349,22 @@ class Panel():
                 if mask & (1 << (max_bytes-1-id)):
                     high = ((id + 1) >> 8) & 0xFF
                     low = (id + 1) & 0xFF
-                    self.send_packet(read_name, [], [high, low, 0, 1])
-                    data = self.receive_packet(0xFE)
+                    await self._send_packet(read_name, [], [high, low, 0, 1])
+                    data = await self._receive_packet(0xFE)
                     length = data[1]
                     name = data[1:length].decode("utf-8")
                     out.append((id+1, name))
         return out
 
-    def req_data_status(self, status_command: Commands, status_command_data: list[int], data_container, enumeration: Enum | None):
+    async def _req_data_status(self, status_command: Commands, status_command_data: list[int], data_container, enumeration: Enum | None):
         if len(data_container):
             packet_data = status_command_data or []
             dataById = {}
             for data in data_container:
                 packet_data.extend([0, data.id])
                 dataById[data.id] = data
-            self.send_packet(status_command, [], packet_data)
-            response = self.receive_packet(0xFE)
+            await self._send_packet(status_command, [], packet_data)
+            response = await self._receive_packet(0xFE)
             response = response[1:]
             while response:
                 id = response[1]
@@ -387,41 +375,52 @@ class Panel():
                     dataById[id].status = status
                 response = response[3:]
 
-    def req_areas(self):
+    async def _req_areas(self):
         self.areas = []
-        area_data = self.req_data_with_text(
+        area_data = await self._req_data_with_text(
             Commands.ReqConfiguredAreas, [], Commands.ReqAreaText, self.max_areas)
         for area_id, area_name in area_data:
-            points = list(map(lambda data: Point(data[0], data[1]), self.req_data_with_text(
+            points = list(map(lambda data: Point(data[0], data[1]), await self._req_data_with_text(
                 Commands.ReqPointsInArea, [0, area_id], Commands.ReqPointText, self.max_points)))
             self.areas.append(Area(area_id, area_name, points))
 
-        output_data = self.req_data_with_text(
+        output_data = await self._req_data_with_text(
             Commands.ReqConfiguredOutputs, [], Commands.ReqOutputText, self.max_areas)
         self.outputs = list(map(lambda x: Output(x[0], x[1]), output_data))
 
-        door_data = self.req_data_with_text(
+        door_data = await self._req_data_with_text(
             Commands.ReqConfiguredDoors, [], Commands.ReqDoorText, self.max_doors)
         self.doors = list(map(lambda x: Door(x[0], x[1]), door_data))
 
-    def update_status(self):
-        self.req_data_status(Commands.ReqAreaStatus,
+
+    async def arm(self, arm_type: ArmType, area: list[Area]):
+        await self._send_packet(Commands.ArmPanelAreas, [], [arm_type.value, 0x80])
+
+    async def update_status(self):
+        await self._req_data_status(Commands.ReqAreaStatus,
                              [], self.areas, AreaStatus)
         for area in self.areas:
-            self.req_data_status(Commands.ReqPointStatus,
+            await self._req_data_status(Commands.ReqPointStatus,
                                  [], area.points, PointStatus)
-        self.req_data_status(Commands.ReqDoorStatus, [], self.doors, None)
-        self.req_data_status(Commands.ReqOutputStatus, [],
-                             self.outputs, OutputStatus)
-
-    def initialise(self):
-        self.send_what_are_you()
-        self.authenticate()
-        self.req_capacities()
-        self.req_areas()
+        await self._req_data_status(Commands.ReqDoorStatus, [], self.doors, None)
+        await self._req_data_status(Commands.ReqOutputStatus, [],
+                                   self.outputs, OutputStatus)
+    async def initialise(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.set_ciphers('DEFAULT')
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        self.reader, self.writer = await asyncio.open_connection(self.ip, self.port, ssl=context)
+        await self._send_what_are_you()
+        await self._authenticate()
+        await self._req_capacities()
+        await self._req_areas()
 
     def close(self):
-        self.ssl_sock.close()
+        self.writer.close()
+
+    def __del__(self):
+        self.close()
 
     def __str__(self) -> str:
         return f"Panel(ip={self.ip}, port={self.port}, type={self.panel_type.name}, rps_protocol_version={self.rps_protocol_version}, \
