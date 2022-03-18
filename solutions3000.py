@@ -405,6 +405,7 @@ class Panel():
         await self._req_data_status(Commands.ReqDoorStatus, [], self.doors, None)
         await self._req_data_status(Commands.ReqOutputStatus, [],
                                    self.outputs, OutputStatus)
+        return self
     async def initialise(self):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         context.set_ciphers('DEFAULT')
