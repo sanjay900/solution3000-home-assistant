@@ -1,11 +1,15 @@
-import socket, ssl, pprint
+import socket
+import ssl
+import pprint
 from enum import Enum
 from pprint import pp
+
 
 class UserType(Enum):
     InstallerApp = 0x00
     AutomationUser = 0x01
     RemoteUser = 0x02
+
 
 class Commands(Enum):
     WhatAreYou = 0x01
@@ -42,6 +46,7 @@ class Commands(Enum):
     ReqUser = 0x40
     SetSubscriptions = 0x5F
 
+
 class PanelType(Enum):
     Undefined = 0x00
     Solution2000 = 0x20
@@ -58,10 +63,12 @@ class PanelType(Enum):
     B3512 = 0xA8
     B6512 = 0xA9
 
+
 class MaxConnectionsInUseFlags(Enum):
-  MaxUserBasedRemoteAccessUsersInUse = 0x04
-  MaxAutomationUsersInUse = 0x02
-  MaxRPSAlinkusersInUse = 0x01
+    MaxUserBasedRemoteAccessUsersInUse = 0x04
+    MaxAutomationUsersInUse = 0x02
+    MaxRPSAlinkusersInUse = 0x01
+
 
 class NegativeAcknoledgement(Enum):
     NonSpecificError = 0x00
@@ -109,11 +116,13 @@ class NegativeAcknoledgement(Enum):
     BadTimeEditChoice = 0xED
     BadRemoteEnable = 0xEF
 
+
 class ArmType(Enum):
     Disarmed = 0x01
     Stay = 0x0A
     Stay2 = 0x0B
     Away = 0x0C
+
 
 class DoorState(Enum):
     NoAction = 0x00
@@ -122,6 +131,7 @@ class DoorState(Enum):
     TerminateUnlockMode = 0x03
     Secure = 0x04
     TerminateSecureMode = 0x05
+
 
 class AreaStatus(Enum):
     Unknown = 0x00
@@ -135,6 +145,7 @@ class AreaStatus(Enum):
     PartOnExitDelay = 0x08
     AllOnInstantArmed = 0x09
 
+
 class PointStatus(Enum):
     Unassigned = 0x00
     Short = 0x01
@@ -142,18 +153,22 @@ class PointStatus(Enum):
     Normal = 0x03
     Missing = 0x04
 
+
 class OutputStatus(Enum):
     Inactive = 0x00
     Active = 0x01
     Unknown = 0x02
+
 
 class ProtocolVersion():
     def __init__(self, major, minor, revision) -> None:
         self.major = major
         self.minor = minor
         self.revision = revision
+
     def __str__(self) -> str:
         return f"Version({self.major}.{self.minor}.{self.revision})"
+
 
 class PanelException(Exception):
     def __init__(self, *args: object) -> None:
@@ -162,56 +177,74 @@ class PanelException(Exception):
             return
         super().__init__(*args)
 
+
 class Component():
     def __init__(self, id, name, status) -> None:
         self.id = id
         self.name = name
         self.status = status
 
+
 class Point(Component):
     def __init__(self, id, name) -> None:
         super().__init__(id, name, PointStatus.Unassigned)
+
     def __str__(self) -> str:
         return f"Point(id={self.id}, status={self.status}, name={self.name})"
 
+
 class DoorMasks(Enum):
-    Unlocked = 1<<7
-    Secured = 1<<6
-    InLearnMode = 1<<5
-    InDiagnosticMode = 1<<4
-    InSDIFailureMode = 1<<2
+    Unlocked = 1 << 7
+    Secured = 1 << 6
+    InLearnMode = 1 << 5
+    InDiagnosticMode = 1 << 4
+    InSDIFailureMode = 1 << 2
     Unknown = 0
+
 
 class Door(Component):
     def __init__(self, id, name) -> None:
         super().__init__(id, name, DoorMasks.Unknown)
+
     def is_locked(self):
         return not (self.status & DoorMasks.Unlocked)
+
     def is_secured(self):
         return self.status & DoorMasks.Secured
+
     def is_in_learn_mode(self):
         return self.status & DoorMasks.InLearnMode
+
     def is_in_diagnostic_mode(self):
         return self.status & DoorMasks.InDiagnosticMode
+
     def is_in_SDI_failure_mode(self):
         return self.status & DoorMasks.InSDIFailureMode
+
     def __str__(self) -> str:
         return f"Door(id={self.id}, name={self.name}, locked={self.is_locked()}, secured={self.is_secured()}, in_learn_mode={self.is_in_learn_mode()}, in_diagnostic_mode={self.is_in_diagnostic_mode()}, in_SDI_failure_mode={self.is_in_SDI_failure_mode()})"
+
 
 class Output(Component):
     def __init__(self, id, name) -> None:
         super().__init__(id, name, OutputStatus.Unknown)
+
     def __str__(self) -> str:
         return f"Output(id={self.id}, name={self.name}, status={self.status})"
+
 
 class Area(Component):
     def __init__(self, id, name, points: list[Point]) -> None:
         super().__init__(id, name, AreaStatus.Unknown)
         self.points = points
+
     def __str__(self) -> str:
         return f"Area(id={self.id}, name={self.name}, status={self.status}, points={', '.join(map(Point.__str__, self.points))})"
+
+
 class Panel():
     areas: list[Area]
+
     def __init__(self, port: int, ip: str, user_type: UserType, passcode: str, pincode: str) -> None:
         self.port = port
         self.ip = ip
@@ -219,9 +252,9 @@ class Panel():
         self.passcode = passcode
         self.pincode = pincode
         self.panel_type = PanelType.Undefined
-        self.rps_protocol_version = ProtocolVersion(0,0,0)
-        self.intrusion_integration_protocol_version = ProtocolVersion(0,0,0)
-        self.execute_protocol_version = ProtocolVersion(0,0,0)
+        self.rps_protocol_version = ProtocolVersion(0, 0, 0)
+        self.intrusion_integration_protocol_version = ProtocolVersion(0, 0, 0)
+        self.execute_protocol_version = ProtocolVersion(0, 0, 0)
         self.max_areas = 0
         self.max_points = 0
         self.max_outputs = 0
@@ -238,17 +271,17 @@ class Panel():
         context.verify_mode = ssl.CERT_NONE
         self.ssl_sock = context.wrap_socket(s)
         self.ssl_sock.connect((ip, port))
-    
-    def send_packet(self, command: Commands, command_format: list[int]=None, data: list[int] | bytearray=None):
+
+    def send_packet(self, command: Commands, command_format: list[int] = None, data: list[int] | bytearray = None):
         command_format = command_format or []
         data = data or []
         if not isinstance(data, bytearray):
             data = bytearray(data)
         length = 1 + len(command_format) + len(data)
         protocol = 0x01
-        packet = bytearray([protocol,length,command.value]) + bytearray(command_format) + data
+        packet = bytearray([protocol, length, command.value]
+                           ) + bytearray(command_format) + data
         self.ssl_sock.write(packet)
-        
 
     def receive_packet(self, expected_response: int) -> bytes:
         protocol = self.ssl_sock.recv(1)[0]
@@ -268,22 +301,26 @@ class Panel():
         self.send_packet(Commands.WhatAreYou, [])
         data = self.receive_packet(0xFE)
         self.panel_type = PanelType(data[1])
-        self.rps_protocol_version = ProtocolVersion(data[2], data[3], data[4] + 255 * data[5])
-        self.intrusion_integration_protocol_version = ProtocolVersion(data[6], data[7], data[8] + 255 * data[9])
-        self.execute_protocol_version = ProtocolVersion(data[10], data[11], data[12] + 255 * data[13])
+        self.rps_protocol_version = ProtocolVersion(
+            data[2], data[3], data[4] + 255 * data[5])
+        self.intrusion_integration_protocol_version = ProtocolVersion(
+            data[6], data[7], data[8] + 255 * data[9])
+        self.execute_protocol_version = ProtocolVersion(
+            data[10], data[11], data[12] + 255 * data[13])
         flags = data[14]
         if flags == MaxConnectionsInUseFlags.MaxUserBasedRemoteAccessUsersInUse:
             raise PanelException("Max User Based Remote Access Users In Use")
         if flags == MaxConnectionsInUseFlags.MaxAutomationUsersInUse:
             raise PanelException("Max Automation Users In Use")
-    
+
     def authenticate(self):
         if len(self.passcode) > 24 or len(self.passcode) < 6:
             raise PanelException("Invalid Passcode Length")
         if len(self.passcode) < 24:
             self.passcode += " "
         self.passcode = "\x00"+self.passcode
-        self.send_packet(Commands.Passcode, [], bytearray(self.passcode, 'utf-8'))
+        self.send_packet(Commands.Passcode, [],
+                         bytearray(self.passcode, 'utf-8'))
         data = self.receive_packet(0xFE)
         if data[1] == 0:
             raise PanelException("Invalid App Passcode")
@@ -300,7 +337,7 @@ class Panel():
     def arm(self, arm_type: ArmType, area: list[Area]):
 
         self.send_packet(Commands.ArmPanelAreas, [], [arm_type.value, 0x80])
-    
+
     def req_capacities(self):
         self.send_packet(Commands.ReqPanelCapacitie)
         data = self.receive_packet(0xFE)
@@ -313,73 +350,83 @@ class Panel():
 
     def req_data_with_text(self, read_type: Commands, read_type_data: list[int], read_name: Commands, max: int):
         out = []
-        self.send_packet(read_type,[],read_type_data)
-        data = self.receive_packet(0xFE)
-        mask = 0
-        for i in range(len(data) - 1):
-            mask = mask << 8 | data[i + 1]
-        max_bytes = (max + 8 - 1) // 8 * 8
-        for id in range(max):
-            if mask & (1 << (max_bytes-1-id)):
-                high = ((id + 1) >> 8) & 0xFF
-                low = (id + 1) & 0xFF
-                self.send_packet(read_name,[],[high, low, 0, 1])
-                data = self.receive_packet(0xFE)
-                length = data[1]
-                name = data[1:length].decode("utf-8")
-                out.append((id+1, name))
+        if max:
+            self.send_packet(read_type, [], read_type_data)
+            data = self.receive_packet(0xFE)
+            mask = 0
+            for i in range(len(data) - 1):
+                mask = mask << 8 | data[i + 1]
+            max_bytes = (max + 8 - 1) // 8 * 8
+            for id in range(max):
+                if mask & (1 << (max_bytes-1-id)):
+                    high = ((id + 1) >> 8) & 0xFF
+                    low = (id + 1) & 0xFF
+                    self.send_packet(read_name, [], [high, low, 0, 1])
+                    data = self.receive_packet(0xFE)
+                    length = data[1]
+                    name = data[1:length].decode("utf-8")
+                    out.append((id+1, name))
         return out
-    
-    def req_data_status(self, status_command: Commands, status_command_data: list[int], data_container, enumeration: Enum):
-        packet_data = status_command_data or []
-        dataById = {}
-        for data in data_container:
-            packet_data.extend([0, data.id])
-            dataById[data.id] = data
-        self.send_packet(status_command, [], packet_data)
-        response = self.receive_packet(0xFE)
-        response = response[1:]
-        while response:
-            id = response[1]
-            status = response[2]
-            dataById[id].status = enumeration(status)
-            response = response[3:]
+
+    def req_data_status(self, status_command: Commands, status_command_data: list[int], data_container, enumeration: Enum | None):
+        if len(data_container):
+            packet_data = status_command_data or []
+            dataById = {}
+            for data in data_container:
+                packet_data.extend([0, data.id])
+                dataById[data.id] = data
+            self.send_packet(status_command, [], packet_data)
+            response = self.receive_packet(0xFE)
+            response = response[1:]
+            while response:
+                id = response[1]
+                status = response[2]
+                if enumeration:
+                    dataById[id].status = enumeration(status)
+                else:
+                    dataById[id].status = status
+                response = response[3:]
 
     def req_areas(self):
         self.areas = []
-        area_data = self.req_data_with_text(Commands.ReqConfiguredAreas, [], Commands.ReqAreaText, self.max_areas)
+        area_data = self.req_data_with_text(
+            Commands.ReqConfiguredAreas, [], Commands.ReqAreaText, self.max_areas)
         for area_id, area_name in area_data:
-            points = list(map(lambda data: Point(data[0], data[1]), self.req_data_with_text(Commands.ReqPointsInArea, [0, area_id], Commands.ReqPointText, self.max_points)))
+            points = list(map(lambda data: Point(data[0], data[1]), self.req_data_with_text(
+                Commands.ReqPointsInArea, [0, area_id], Commands.ReqPointText, self.max_points)))
             self.areas.append(Area(area_id, area_name, points))
-        
-        output_data = self.req_data_with_text(Commands.ReqConfiguredOutputs, [], Commands.ReqOutputText, self.max_areas)
-        self.outputs = list(map(lambda x: Output(x[0], x[1])), output_data)
 
-        door_data = self.req_data_with_text(Commands.ReqConfiguredDoors, [], Commands.ReqDoorText, self.max_doors)
-        self.doors = list(map(lambda x: Door(x[0], x[1])), door_data)
-    
-    def req_area_status(self):
-        self.req_data_status(Commands.ReqAreaStatus, [], self.areas, AreaStatus)
+        output_data = self.req_data_with_text(
+            Commands.ReqConfiguredOutputs, [], Commands.ReqOutputText, self.max_areas)
+        self.outputs = list(map(lambda x: Output(x[0], x[1]), output_data))
+
+        door_data = self.req_data_with_text(
+            Commands.ReqConfiguredDoors, [], Commands.ReqDoorText, self.max_doors)
+        self.doors = list(map(lambda x: Door(x[0], x[1]), door_data))
+
+    def update_status(self):
+        self.req_data_status(Commands.ReqAreaStatus,
+                             [], self.areas, AreaStatus)
         for area in self.areas:
-            self.req_data_status(Commands.ReqPointStatus, [], area.points, PointStatus)
-            
+            self.req_data_status(Commands.ReqPointStatus,
+                                 [], area.points, PointStatus)
+        self.req_data_status(Commands.ReqDoorStatus, [], self.doors, None)
+        self.req_data_status(Commands.ReqOutputStatus, [],
+                             self.outputs, OutputStatus)
+
     def initialise(self):
-        panel.send_what_are_you()
-        panel.authenticate()
-        panel.req_capacities()
-        panel.req_areas()
+        self.send_what_are_you()
+        self.authenticate()
+        self.req_capacities()
+        self.req_areas()
 
     def close(self):
         self.ssl_sock.close()
 
     def __str__(self) -> str:
-        return f"Panel({self.ip}, {self.port}, {self.panel_type.name}, {self.rps_protocol_version}, {self.intrusion_integration_protocol_version}, {self.execute_protocol_version})"
-
-panel = Panel(7700, '', UserType.InstallerApp, '', '')
-panel.initialise()
-panel.req_area_status()
-# panel.arm(ArmType.Stay, panel.areas)
-        
-for area in panel.areas:
-    print(area)
-print(panel)
+        return f"Panel(ip={self.ip}, port={self.port}, type={self.panel_type.name}, rps_protocol_version={self.rps_protocol_version}, \
+intrusion_integration_protocol_version={self.intrusion_integration_protocol_version}, execute_protocol_version={self.execute_protocol_version}, \
+max_areas={self.max_areas}, max_points={self.max_points}, max_users={self.max_users}, max_keypads={self.max_keypads}, max_doors={self.max_doors}, \
+areas=[{', '.join(map(Area.__str__, self.areas))}]), \
+doors=[{', '.join(map(Door.__str__, self.doors))}]), \
+outputs=[{', '.join(map(Output.__str__, self.outputs))}])"
