@@ -8,3 +8,4 @@ The automation password can be found via A-Link. It will be under the config via
 The default port is 7700
 The default installer code is 1234, but this will likley have been changed by your installer
 The default automation password is 0000000000
+![screenshot](screenshot.png)
