@@ -342,7 +342,7 @@ class Panel:
         if data[1] == 2:
             raise PanelException("Panel is busy")
         # Solution3000 requires another round of authentication
-        if self.panel_type == PanelType.Solution3000:
+        if self.panel_type == PanelType.Solution3000 or self.panel_type == PanelType.Solution2000:
             pincode_num = int(str(self.pincode), 16)
             pincode_low = pincode_num & 0xFF
             pincode_high = (pincode_num >> 8) & 0xFF
