@@ -8,7 +8,13 @@ import voluptuous as vol
 from .solutions3000 import Panel, UserType, PanelException
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow
-from homeassistant.const import CONF_PORT, CONF_IP_ADDRESS, CONF_PIN, CONF_PASSWORD, CONF_NAME
+from homeassistant.const import (
+    CONF_PORT,
+    CONF_IP_ADDRESS,
+    CONF_PIN,
+    CONF_PASSWORD,
+    CONF_NAME,
+)
 from homeassistant.data_entry_flow import FlowResult
 
 from .const import DOMAIN
@@ -34,11 +40,12 @@ class Solutions3000FlowHandler(ConfigFlow, domain=DOMAIN):
                     ip=user_input[CONF_IP_ADDRESS],
                     user_type=UserType.InstallerApp,
                     passcode=user_input[CONF_PASSWORD],
-                    pincode=user_input[CONF_PIN]
+                    pincode=user_input[CONF_PIN],
                 )
                 await panel.initialise()
                 panel.close()
             except PanelException as e:
+                print(e)
                 errors["base"] = " ".join(str(r) for r in e.args)
             else:
                 return self.async_create_entry(
@@ -55,10 +62,10 @@ class Solutions3000FlowHandler(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_PORT): str,
+                    vol.Optional(CONF_PORT, default=7700): int,
                     vol.Required(CONF_IP_ADDRESS): str,
-                    vol.Required(CONF_PASSWORD): str,
                     vol.Required(CONF_PIN): int,
+                    vol.Optional(CONF_PASSWORD, default="0000000000"): str,
                     vol.Optional(
                         CONF_NAME, default=self.hass.config.location_name
                     ): str,

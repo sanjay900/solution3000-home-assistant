@@ -17,7 +17,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .const import DOMAIN, SENSORS, SERVICES
+from .const import DOMAIN
 
 from .solutions3000 import Point, Area
 
@@ -33,10 +33,10 @@ async def async_setup_entry(
             coordinator=hass.data[DOMAIN][entry.entry_id],
             entry_id=entry.entry_id,
             area=area,
-            point=point
+            point=point,
         )
-        for area in hass.data[DOMAIN][entry.entry_id]
-        for point in area
+        for area in hass.data[DOMAIN][entry.entry_id].data.areas
+        for point in area.points
     )
 
 
@@ -57,7 +57,7 @@ class Solutions3000SensorEntity(CoordinatorEntity, SensorEntity):
         self.area = area
         self.entity_id = f"{SENSOR_DOMAIN}.{area.id}_{point.id}"
         self._attr_unique_id = f"{entry_id}_{area.id}_{point.id}"
-
+        self._attr_name = f"PIR Sensor: {area.name} - {point.name}"
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, f"{entry_id}_{area.id}_{point.id}")},
@@ -68,5 +68,5 @@ class Solutions3000SensorEntity(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
-        
-        return self.point.status.name()
+
+        return self.point.status.name

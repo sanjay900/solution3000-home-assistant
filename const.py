@@ -7,7 +7,7 @@ import logging
 from typing import Final
 
 DOMAIN = "solutions3000"
-SCAN_INTERVAL = timedelta(seconds=10)
+SCAN_INTERVAL = timedelta(seconds=1)
 LOGGER = logging.getLogger(__package__)
 
 SERVICE_PANEL: Final = "panel"

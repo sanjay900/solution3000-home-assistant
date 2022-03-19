@@ -2,7 +2,7 @@ import socket
 import ssl
 from enum import Enum
 import asyncio
-
+from typing import Union
 
 class UserType(Enum):
     InstallerApp = 0x00
@@ -104,7 +104,7 @@ class NegativeAcknoledgement(Enum):
     TooManyRFFevicesForThisPanel = 0xE2
     DuplicateRFID = 0xE3
     DuplicateAccessCard = 0xE4
-    BadAccessCardData = 0XE5
+    BadAccessCardData = 0xE5
     BadLanguageChoice = 0xE6
     BadSupervisionModeSelection = 0xE7
     BadEnableDisableChoice = 0xE8
@@ -159,7 +159,7 @@ class OutputStatus(Enum):
     Unknown = 0x02
 
 
-class ProtocolVersion():
+class ProtocolVersion:
     def __init__(self, major, minor, revision) -> None:
         self.major = major
         self.minor = minor
@@ -177,7 +177,7 @@ class PanelException(Exception):
         super().__init__(*args)
 
 
-class Component():
+class Component:
     def __init__(self, id, name, status) -> None:
         self.id = id
         self.name = name
@@ -241,9 +241,12 @@ class Area(Component):
         return f"Area(id={self.id}, name={self.name}, status={self.status}, points={', '.join(map(Point.__str__, self.points))})"
 
 
-class Panel():
+class Panel:
     areas: list[Area]
-    def __init__(self, port: int, ip: str, user_type: UserType, passcode: str, pincode: str) -> None:
+
+    def __init__(
+        self, port: int, ip: str, user_type: UserType, passcode: str, pincode: str
+    ) -> None:
         self.port = port
         self.ip = ip
         self.user_type = user_type
@@ -262,43 +265,63 @@ class Panel():
         self.areas = []
         self.outputs = []
         self.doors = []
+        self.lock = asyncio.Lock()
 
-    async def _send_packet(self, command: Commands, command_format: list[int] = None, data: list[int] | bytearray = None):
-        command_format = command_format or []
-        data = data or []
-        if not isinstance(data, bytearray):
-            data = bytearray(data)
-        length = 1 + len(command_format) + len(data)
-        protocol = 0x01
-        packet = bytearray([protocol, length, command.value]
-                           ) + bytearray(command_format) + data
-        self.writer.write(packet)
-        await self.writer.drain()
+    async def _xfer_packet(
+        self,
+        command: Commands,
+        expected_response: int,
+        command_format: list[int] = None,
+        data: Union[list[int], bytearray] = None,
+    ):
+        async with self.lock:
+            command_format = command_format or []
+            data = data or []
+            if not isinstance(data, bytearray):
+                data = bytearray(data)
+            length = 1 + len(command_format) + len(data)
+            protocol = 0x01
+            packet = (
+                bytearray([protocol, length, command.value])
+                + bytearray(command_format)
+                + data
+            )
+            try:
+                self.writer.write(packet)
+                await self.writer.drain()
 
-    async def _receive_packet(self, expected_response: int) -> bytes:
-        protocol = (await self.reader.read(1))[0]
-        if protocol == 1:
-            length = (await self.reader.read(1))[0]
-            data = await self.reader.read(length)
-            if data[0] != expected_response:
-                if data[0] == 0xFD:
-                    raise PanelException(NegativeAcknoledgement(data[1]))
+                protocol = (await self.reader.read(1))[0]
+                if protocol == 1:
+                    length = (await self.reader.read(1))[0]
+                    data = await self.reader.read(length)
+                    if data[0] != expected_response:
+                        if data[0] == 0xFD:
+                            raise PanelException(NegativeAcknoledgement(data[1]))
+                        else:
+                            raise PanelException(f"Unknown error {data}")
+                    return data
                 else:
-                    raise PanelException(f"Unknown error {data}")
-            return data
-        else:
-            raise PanelException(f"Unexpected protocol {protocol}")
+                    raise PanelException(f"Unexpected protocol {protocol}")
+            except ConnectionError:
+                await self.initialise()
+                return self._xfer_packet(command, expected_response, command_format, data)
+                
+
+
+        
 
     async def _send_what_are_you(self):
-        await self._send_packet(Commands.WhatAreYou, [])
-        data = await self._receive_packet(0xFE)
+        data = await self._xfer_packet(Commands.WhatAreYou, 0xFE, [])
         self.panel_type = PanelType(data[1])
         self.rps_protocol_version = ProtocolVersion(
-            data[2], data[3], data[4] + 255 * data[5])
+            data[2], data[3], data[4] + 255 * data[5]
+        )
         self.intrusion_integration_protocol_version = ProtocolVersion(
-            data[6], data[7], data[8] + 255 * data[9])
+            data[6], data[7], data[8] + 255 * data[9]
+        )
         self.execute_protocol_version = ProtocolVersion(
-            data[10], data[11], data[12] + 255 * data[13])
+            data[10], data[11], data[12] + 255 * data[13]
+        )
         flags = data[14]
         if flags == MaxConnectionsInUseFlags.MaxUserBasedRemoteAccessUsersInUse:
             raise PanelException("Max User Based Remote Access Users In Use")
@@ -310,25 +333,23 @@ class Panel():
             raise PanelException("Invalid Passcode Length")
         if len(self.passcode) < 24:
             self.passcode += " "
-        self.passcode = "\x00"+self.passcode
-        await self._send_packet(Commands.Passcode, [],
-                         bytearray(self.passcode, 'utf-8'))
-        data = await self._receive_packet(0xFE)
+        self.passcode = "\x00" + self.passcode
+        data = await self._xfer_packet(
+            Commands.Passcode, 0xFE, [], bytearray(self.passcode, "utf-8")
+        )
         if data[1] == 0:
             raise PanelException("Invalid App Passcode")
         if data[1] == 2:
             raise PanelException("Panel is busy")
         # Solution3000 requires another round of authentication
         if self.panel_type == PanelType.Solution3000:
-            pincode_num = int(self.pincode, 16)
-            pincode_low = pincode_num & 0xff
-            pincode_high = (pincode_num >> 8) & 0xff
-            await self._send_packet(Commands.Pincode, [], [pincode_high, pincode_low])
-            await self._receive_packet(0xFE)
+            pincode_num = int(str(self.pincode), 16)
+            pincode_low = pincode_num & 0xFF
+            pincode_high = (pincode_num >> 8) & 0xFF
+            await self._xfer_packet(Commands.Pincode, 0xFE, [], [pincode_high, pincode_low])
 
     async def _req_capacities(self):
-        await self._send_packet(Commands.ReqPanelCapacitie)
-        data = await self._receive_packet(0xFE)
+        data = await self._xfer_packet(Commands.ReqPanelCapacitie, 0xFE)
         self.max_areas = (data[2] * 255) + data[3]
         self.max_points = (data[4] * 255) + data[5]
         self.max_outputs = (data[6] * 255) + data[7]
@@ -336,35 +357,44 @@ class Panel():
         self.max_keypads = data[10]
         self.max_doors = data[11]
 
-    async def _req_data_with_text(self, read_type: Commands, read_type_data: list[int], read_name: Commands, max: int):
+    async def _req_data_with_text(
+        self,
+        read_type: Commands,
+        read_type_data: list[int],
+        read_name: Commands,
+        max: int,
+    ):
         out = []
         if max:
-            await self._send_packet(read_type, [], read_type_data)
-            data = await self._receive_packet(0xFE)
+            data = await self._xfer_packet(read_type, 0xFE, [], read_type_data)
             mask = 0
             for i in range(len(data) - 1):
                 mask = mask << 8 | data[i + 1]
             max_bytes = (max + 8 - 1) // 8 * 8
             for id in range(max):
-                if mask & (1 << (max_bytes-1-id)):
+                if mask & (1 << (max_bytes - 1 - id)):
                     high = ((id + 1) >> 8) & 0xFF
                     low = (id + 1) & 0xFF
-                    await self._send_packet(read_name, [], [high, low, 0, 1])
-                    data = await self._receive_packet(0xFE)
+                    data = await self._xfer_packet(read_name, 0xFE, [], [high, low, 0, 1])
                     length = data[1]
                     name = data[1:length].decode("utf-8")
-                    out.append((id+1, name))
+                    out.append((id + 1, name))
         return out
 
-    async def _req_data_status(self, status_command: Commands, status_command_data: list[int], data_container, enumeration: Enum | None):
+    async def _req_data_status(
+        self,
+        status_command: Commands,
+        status_command_data: list[int],
+        data_container,
+        enumeration: Union[Enum, None],
+    ):
         if len(data_container):
             packet_data = status_command_data or []
             dataById = {}
             for data in data_container:
                 packet_data.extend([0, data.id])
                 dataById[data.id] = data
-            await self._send_packet(status_command, [], packet_data)
-            response = await self._receive_packet(0xFE)
+            response = await self._xfer_packet(status_command, 0xFE, [], packet_data)
             response = response[1:]
             while response:
                 id = response[1]
@@ -378,40 +408,55 @@ class Panel():
     async def _req_areas(self):
         self.areas = []
         area_data = await self._req_data_with_text(
-            Commands.ReqConfiguredAreas, [], Commands.ReqAreaText, self.max_areas)
+            Commands.ReqConfiguredAreas, [], Commands.ReqAreaText, self.max_areas
+        )
         for area_id, area_name in area_data:
-            points = list(map(lambda data: Point(data[0], data[1]), await self._req_data_with_text(
-                Commands.ReqPointsInArea, [0, area_id], Commands.ReqPointText, self.max_points)))
+            points = list(
+                map(
+                    lambda data: Point(data[0], data[1]),
+                    await self._req_data_with_text(
+                        Commands.ReqPointsInArea,
+                        [0, area_id],
+                        Commands.ReqPointText,
+                        self.max_points,
+                    ),
+                )
+            )
             self.areas.append(Area(area_id, area_name, points))
 
         output_data = await self._req_data_with_text(
-            Commands.ReqConfiguredOutputs, [], Commands.ReqOutputText, self.max_areas)
+            Commands.ReqConfiguredOutputs, [], Commands.ReqOutputText, self.max_areas
+        )
         self.outputs = list(map(lambda x: Output(x[0], x[1]), output_data))
 
         door_data = await self._req_data_with_text(
-            Commands.ReqConfiguredDoors, [], Commands.ReqDoorText, self.max_doors)
+            Commands.ReqConfiguredDoors, [], Commands.ReqDoorText, self.max_doors
+        )
         self.doors = list(map(lambda x: Door(x[0], x[1]), door_data))
 
-
     async def arm(self, arm_type: ArmType, area: list[Area]):
-        await self._send_packet(Commands.ArmPanelAreas, [], [arm_type.value, 0x80])
+        await self._xfer_packet(Commands.ArmPanelAreas, 0xFC, [], [arm_type.value, 0x80])
 
     async def update_status(self):
-        await self._req_data_status(Commands.ReqAreaStatus,
-                             [], self.areas, AreaStatus)
+        await self._req_data_status(Commands.ReqAreaStatus, [], self.areas, AreaStatus)
         for area in self.areas:
-            await self._req_data_status(Commands.ReqPointStatus,
-                                 [], area.points, PointStatus)
+            await self._req_data_status(
+                Commands.ReqPointStatus, [], area.points, PointStatus
+            )
         await self._req_data_status(Commands.ReqDoorStatus, [], self.doors, None)
-        await self._req_data_status(Commands.ReqOutputStatus, [],
-                                   self.outputs, OutputStatus)
+        await self._req_data_status(
+            Commands.ReqOutputStatus, [], self.outputs, OutputStatus
+        )
         return self
+
     async def initialise(self):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        context.set_ciphers('DEFAULT')
+        context.set_ciphers("DEFAULT")
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
-        self.reader, self.writer = await asyncio.open_connection(self.ip, self.port, ssl=context)
+        self.reader, self.writer = await asyncio.open_connection(
+            self.ip, self.port, ssl=context
+        )
         await self._send_what_are_you()
         await self._authenticate()
         await self._req_capacities()
