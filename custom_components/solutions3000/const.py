@@ -1,4 +1,3 @@
-"""Constants for the Detailed Hello World Push integration."""
 from __future__ import annotations
 
 from datetime import timedelta
