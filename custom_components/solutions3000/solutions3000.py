@@ -437,7 +437,7 @@ class Panel:
     async def arm(self, arm_type: ArmType, areas: list[Area]):
         mask = 0
         for area in areas:
-            mask |= 1 << (1-area.id)
+            mask |= 1 << (8-area.id)
             if arm_type == ArmType.Away:
                 area.status = AreaStatus.AllOnExitDelay
             if arm_type == ArmType.Stay or arm_type == ArmType.Stay2:
