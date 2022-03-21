@@ -434,8 +434,23 @@ class Panel:
         )
         self.doors = list(map(lambda x: Door(x[0], x[1]), door_data))
 
-    async def arm(self, arm_type: ArmType, area: list[Area]):
-        await self._xfer_packet(Commands.ArmPanelAreas, 0xFC, [], [arm_type.value, 0x80])
+    async def arm(self, arm_type: ArmType, areas: list[Area]):
+        mask = 0
+        for area in areas:
+            mask |= 1 << (1-area.id)
+            if arm_type == ArmType.Away:
+                area.status = AreaStatus.AllOnExitDelay
+            if arm_type == ArmType.Stay or arm_type == ArmType.Stay2:
+                area.status = AreaStatus.PartOnExitDelay
+        await self._xfer_packet(Commands.ArmPanelAreas, 0xFC, [], [arm_type.value, mask])
+
+    async def set_output(self, output: Output, state: OutputStatus):
+        output.status = state
+        await self._xfer_packet(Commands.SetOutputState, 0xFC, [], [output.id, state])
+
+    async def set_door(self, door: Door, state: int):
+        door.status = state
+        await self._xfer_packet(Commands.SetDoorState, 0xFC, [], [door.id, state])
 
     async def update_status(self):
         await self._req_data_status(Commands.ReqAreaStatus, [], self.areas, AreaStatus)

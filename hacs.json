@@ -1,0 +1,6 @@
+{
+    "name": "Solutions300 Panel",
+    "domains": ["alarm_control_panel"],
+    "iot_class": "local_polling",
+    "render_readme": true
+  }

@@ -2,6 +2,8 @@
 This integration is a work in progress for connecting home assistant to a solutions 3000 (and possibly 2000) panel.
 It is based on a combination of the [vera integration](https://drive.google.com/file/d/1kbwVQMPxxul9jySapcCZM9C5rQPPKN4k/view) and https://github.com/EHylands/homebridge-boschcontrolpanel_bgseries.
 
+Do note that using this integration will stop both A-Link and the RSC+ app from working, as the panel only accepts connections from one source at a time.
+
 ## Configuration
 You will need the ip, port, automation password and the installer code for your module
 
