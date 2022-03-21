@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
-    DOMAIN as SENSOR_DOMAIN,
+    DOMAIN as COMPONENT_DOMAIN,
     SensorEntity,
     SensorEntityDescription,
 )
@@ -55,14 +55,15 @@ class Solutions3000SensorEntity(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator=coordinator)
         self.point = point
         self.area = area
-        self.entity_id = f"{SENSOR_DOMAIN}.{area.id}_{point.id}"
-        self._attr_unique_id = f"{entry_id}_{area.id}_{point.id}"
+        self.entity_id = f"{COMPONENT_DOMAIN}.{area.id}_{point.id}"
+        self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}_{point.id}"
         self._attr_name = f"PIR Sensor: {area.name} - {point.name}"
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, f"{entry_id}_{area.id}_{point.id}")},
             manufacturer="bosch",
-            name=f"{area.name}: {point.name}",
+            model="solutions 3000"
+            name=f"PIR Sensor: {area.name}: {point.name}",
         )
 
     @property

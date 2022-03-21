@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from homeassistant.components.cover import (
-    DOMAIN as SENSOR_DOMAIN,
+    DOMAIN as COMPONENT_DOMAIN,
     CoverEntity,
     CoverEntityDescription,
     DEVICE_CLASS_DOOR,
@@ -54,14 +54,15 @@ class Solutions3000CoverEntity(CoordinatorEntity, CoverEntity):
         """Initialize Solutions3000 sensor."""
         super().__init__(coordinator=coordinator)
         self.door = door
-        self.entity_id = f"{SENSOR_DOMAIN}.door{door.id}"
-        self._attr_unique_id = f"door{entry_id}_{door.id}"
+        self.entity_id = f"{COMPONENT_DOMAIN}.door_{door.id}"
+        self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{door.id}"
         self._attr_name = f"Door: {door.name}"
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, f"{entry_id}_{door.id}")},
             manufacturer="bosch",
-            name=f"door_{door.name}",
+            model="solutions 3000",
+            name=f"{COMPONENT_DOMAIN}_{door.name}",
         )
 
     @property

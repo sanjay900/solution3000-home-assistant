@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from homeassistant.components.switch import (
-    DOMAIN as SENSOR_DOMAIN,
+    DOMAIN as COMPONENT_DOMAIN,
     SwitchEntity,
     SwitchEntityDescription,
 )
@@ -51,14 +51,15 @@ class Solutions3000OutputEntity(CoordinatorEntity, SwitchEntity):
         """Initialize Solutions3000 sensor."""
         super().__init__(coordinator=coordinator)
         self.output = output
-        self.entity_id = f"{SENSOR_DOMAIN}.output_{output.id}"
-        self._attr_unique_id = f"output_{entry_id}_{output.id}"
+        self.entity_id = f"{COMPONENT_DOMAIN}.output_{output.id}"
+        self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{output.id}"
         self._attr_name = f"Output: {output.name}"
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, f"{entry_id}_{output.id}")},
             manufacturer="bosch",
-            name=f"output_{output.name}",
+            model="solutions 3000",
+            name=f"{COMPONENT_DOMAIN}_{output.name}",
         )
 
     @property

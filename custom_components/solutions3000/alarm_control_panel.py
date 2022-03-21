@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from homeassistant.components.alarm_control_panel import (
-    DOMAIN as SENSOR_DOMAIN,
+    DOMAIN as COMPONENT_DOMAIN,
     AlarmControlPanelEntity,
     SUPPORT_ALARM_ARM_AWAY,
     SUPPORT_ALARM_ARM_CUSTOM_BYPASS,
@@ -67,7 +67,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Solutions3000 sensors based on a config entry."""
     async_add_entities(
-        Solutions3000AreaSensorEntity(
+        Solutions3000ControlPanelEntity(
             coordinator=hass.data[DOMAIN][entry.entry_id],
             entry_id=entry.entry_id,
             area=area,
@@ -76,7 +76,7 @@ async def async_setup_entry(
     )
 
 
-class Solutions3000AreaSensorEntity(CoordinatorEntity, AlarmControlPanelEntity):
+class Solutions3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity):
     """Defines an Solutions3000 sensor."""
 
     def __init__(
@@ -89,14 +89,15 @@ class Solutions3000AreaSensorEntity(CoordinatorEntity, AlarmControlPanelEntity):
         """Initialize Solutions3000 sensor."""
         super().__init__(coordinator=coordinator)
         self.area = area
-        self.entity_id = f"{SENSOR_DOMAIN}.{area.id}"
-        self._attr_unique_id = f"{entry_id}_{area.id}"
+        self.entity_id = f"{COMPONENT_DOMAIN}.{area.id}"
+        self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}"
         self._attr_name = f"Area: {area.name}"
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{entry_id}_{area.id}")},
+            identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}")},
             manufacturer="bosch",
-            name=f"{area.name}",
+            model="solutions 3000",
+            name=f"{COMPONENT_DOMAIN}_{area.name}",
         )
 
     @property
