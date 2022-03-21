@@ -3,9 +3,7 @@
         "abort": {
             "already_setup": "Already configured. Only a single configuration possible.",
             "authorize_url_timeout": "Timeout generating authorize URL.",
-            "connection_error": "Failed to connect",
-            "missing_configuration": "The Soma component is not configured. Please follow the documentation.",
-            "result_error": "SOMA Connect responded with error status."
+            "connection_error": "Failed to connect"
         },
         "create_entry": {
             "default": "Successfully authenticated"
