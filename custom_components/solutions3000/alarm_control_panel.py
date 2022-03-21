@@ -93,7 +93,6 @@ class Solutions3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity
         self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}"
         self._attr_name = f"Area: {area.name}"
         self._attr_device_info = DeviceInfo(
-            entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}")},
             manufacturer="bosch",
             model="solutions 3000",

@@ -59,7 +59,6 @@ class Solutions3000SensorEntity(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}_{point.id}"
         self._attr_name = f"PIR Sensor: {area.name} - {point.name}"
         self._attr_device_info = DeviceInfo(
-            entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}_{point.id}")},
             manufacturer="bosch",
             model="solutions 3000",
