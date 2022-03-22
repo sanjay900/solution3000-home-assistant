@@ -69,7 +69,7 @@ class Solutions3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def device_class(self):
-        if "smoke" in self.point.name:
+        if "smoke" in self.point.name.lower():
             return DEVICE_CLASS_SMOKE
         return DEVICE_CLASS_MOTION
 
