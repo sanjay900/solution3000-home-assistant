@@ -5,7 +5,8 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as COMPONENT_DOMAIN,
     BinarySensorEntity,
     BinarySensorEntityDescription,
-    DEVICE_CLASS_MOTION
+    DEVICE_CLASS_MOTION,
+    DEVICE_CLASS_SMOKE
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -68,6 +69,8 @@ class Solutions3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def device_class(self):
+        if "smoke" in self.point.name:
+            return DEVICE_CLASS_SMOKE
         return DEVICE_CLASS_MOTION
 
     @property
