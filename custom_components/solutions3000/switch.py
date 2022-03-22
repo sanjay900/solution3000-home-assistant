@@ -55,8 +55,7 @@ class Solutions3000OutputEntity(CoordinatorEntity, SwitchEntity):
         self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{output.id}"
         self._attr_name = f"Output: {output.name}"
         self._attr_device_info = DeviceInfo(
-            entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{entry_id}_{output.id}")},
+            identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}")},
             manufacturer="bosch",
             model="solutions 3000",
             name=f"{COMPONENT_DOMAIN}_{output.name}",

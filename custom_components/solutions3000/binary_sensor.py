@@ -5,6 +5,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as COMPONENT_DOMAIN,
     BinarySensorEntity,
     BinarySensorEntityDescription,
+    DEVICE_CLASS_MOTION
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -59,7 +60,7 @@ class Solutions3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
         self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}_{point.id}"
         self._attr_name = f"PIR Sensor: {area.name} - {point.name}"
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}_{point.id}")},
+            identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}")},
             manufacturer="bosch",
             model="solutions 3000",
             name=f"PIR Sensor: {area.name}: {point.name}",
@@ -67,7 +68,7 @@ class Solutions3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def device_class(self):
-        return "motion"
+        return DEVICE_CLASS_MOTION
 
     @property
     def is_on(self) -> StateType:
