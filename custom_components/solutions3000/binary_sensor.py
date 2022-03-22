@@ -1,10 +1,10 @@
 """Support for Solutions3000 sensors."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import (
+from homeassistant.components.binary_sensor import (
     DOMAIN as COMPONENT_DOMAIN,
-    SensorEntity,
-    SensorEntityDescription,
+    BinarySensorEntity,
+    BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -19,7 +19,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import DOMAIN
 
-from .solutions3000 import Point, Area
+from .solutions3000 import Point, Area, PointStatus
 
 
 async def async_setup_entry(
@@ -40,7 +40,7 @@ async def async_setup_entry(
     )
 
 
-class Solutions3000SensorEntity(CoordinatorEntity, SensorEntity):
+class Solutions3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
     """Defines an Solutions3000 sensor."""
 
     def __init__(
@@ -66,7 +66,14 @@ class Solutions3000SensorEntity(CoordinatorEntity, SensorEntity):
         )
 
     @property
-    def native_value(self) -> StateType:
-        """Return the state of the sensor."""
+    def device_class(self):
+        return "motion"
 
-        return self.point.status.name
+    @property
+    def is_on(self) -> StateType:
+        """Return the state of the sensor."""
+        return self.point.status == PointStatus.Open
+
+    @property
+    def extra_state_attributes(self):
+        return {"extended_status": self.point.status.name}
