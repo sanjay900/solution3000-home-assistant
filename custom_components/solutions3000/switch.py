@@ -58,7 +58,7 @@ class Solutions3000OutputEntity(CoordinatorEntity, SwitchEntity):
             identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}")},
             manufacturer="bosch",
             model="solutions 3000",
-            name=f"{COMPONENT_DOMAIN}_{output.name}",
+            name=f"{output.name}",
         )
 
     @property

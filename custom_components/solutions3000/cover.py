@@ -61,7 +61,7 @@ class Solutions3000CoverEntity(CoordinatorEntity, CoverEntity):
             identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}")},
             manufacturer="bosch",
             model="solutions 3000",
-            name=f"{COMPONENT_DOMAIN}_{door.name}",
+            name=f"{door.name}",
         )
 
     @property

@@ -60,7 +60,7 @@ class Solutions3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
         self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{area.id}_{point.id}"
         self._attr_name = f"{area.name} - {point.name}"
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}")},
+            identifiers={(DOMAIN, f"{entry_id}_{area.name}")},
             manufacturer="bosch",
             model="solutions 3000",
             name=f"{area.name} sensors",
