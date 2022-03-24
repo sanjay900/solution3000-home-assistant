@@ -33,8 +33,8 @@ class Commands(Enum):
     ReqOutputStatus = 0x31
     SetOutputState = 0x32
     ReqOutputText = 0x33
-    ReqPointsInArea = 0x35
-    ReqConfiguredPoints = 0x36
+    ReqConfiguredPoints = 0x35
+    ReqPointsInArea = 0x36
     ReqFaultedPoints = 0x37
     ReqPointStatus = 0x38
     ReqBypassedPoints = 0x39
@@ -390,19 +390,19 @@ class Panel:
     ):
         if len(data_container):
             packet_data = status_command_data or []
-            dataById = {}
+            data_by_id = {}
             for data in data_container:
                 packet_data.extend([0, data.id])
-                dataById[data.id] = data
+                data_by_id[data.id] = data
             response = await self._xfer_packet(status_command, 0xFE, [], packet_data)
             response = response[1:]
             while response:
-                id = response[1]
+                data_id = response[1]
                 status = response[2]
                 if enumeration:
-                    dataById[id].status = enumeration(status)
+                    data_by_id[data_id].status = enumeration(status)
                 else:
-                    dataById[id].status = status
+                    data_by_id[data_id].status = status
                 response = response[3:]
 
     async def _req_areas(self):
