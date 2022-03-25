@@ -1,6 +1,6 @@
 {
   "domain": "solutions3000",
-  "name": "Solutions 3000",
+  "name": "Solution 3000",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/solution3000",
   "requirements": [],
