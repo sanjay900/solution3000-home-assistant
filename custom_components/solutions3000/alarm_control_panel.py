@@ -131,4 +131,4 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
     async def async_alarm_arm_night(self, code=None) -> None:
         self.area.status = AreaStatus.PartOnExitDelay
         self.async_schedule_update_ha_state()
-        await self.coordinator.data.arm(ArmType.Stay, [self.area])
+        await self.coordinator.data.arm(ArmType.Stay2, [self.area])
