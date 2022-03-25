@@ -4,7 +4,7 @@ from enum import Enum
 import asyncio
 from typing import Union
 
-from const import LOGGER
+from .const import LOGGER
 
 class UserType(Enum):
     InstallerApp = 0x00
