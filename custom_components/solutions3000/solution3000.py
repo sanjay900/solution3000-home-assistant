@@ -3,8 +3,8 @@ import ssl
 from enum import Enum
 import asyncio
 from typing import Union
-
-from .const import LOGGER
+import logging
+LOGGER = logging.getLogger(__package__)
 
 class UserType(Enum):
     InstallerApp = 0x00
