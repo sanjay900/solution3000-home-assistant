@@ -386,11 +386,12 @@ class Panel:
         if max:
             data = await self._xfer_packet(read_type, 0xFE, [], read_type_data)
             mask = 0
+            max_bits = 0
             for i in range(len(data) - 1):
                 mask = mask << 8 | data[i + 1]
-            max_bytes = (max + 8 - 1) // 8 * 8
+                max_bits += 8
             for id in range(max):
-                if mask & (1 << (max_bytes - 1 - id)):
+                if mask & (1 << (max_bits - 1 - id)):
                     high = ((id + 1) >> 8) & 0xFF
                     low = (id + 1) & 0xFF
                     data = await self._xfer_packet(read_name, 0xFE, [], [high, low, 0, 1])
