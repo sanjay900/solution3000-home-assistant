@@ -56,7 +56,7 @@ class Solution3000CoverEntity(CoordinatorEntity, CoverEntity):
         self.door = door
         self.entity_id = f"{COMPONENT_DOMAIN}.door_{door.id}"
         self._attr_unique_id = f"{COMPONENT_DOMAIN}_{entry_id}_{door.id}"
-        self._attr_name = f"Door: {door.name}"
+        self._attr_name = f"{door.name}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}")},
             manufacturer="Bosch",
