@@ -16,3 +16,9 @@ The default installer code is 1234, but this will likley have been changed by yo
 The default automation password is 0000000000
 
 ![screenshot](screenshot.png)
+
+Note that the alarm does not not have an ability to let home assistant know what type of sensor is in use. If you have a sensor plugged in that isnt a PIR sensor (for example, a smoke alarm) and you want this to show up in home assistant, edit the entity in customize.yaml. For example:
+```yaml
+binary_sensor.1_8:
+  device_class: smoke
+```
