@@ -3,8 +3,6 @@ import ssl
 from enum import Enum
 import asyncio
 from typing import Union
-import logging
-LOGGER = logging.getLogger(__package__)
 
 class UserType(Enum):
     InstallerApp = 0x00
@@ -306,7 +304,6 @@ class Panel:
                 + data
             )
             try:
-                LOGGER.info("Sending: %02x %s %s", command.value, command.name, str([hex(x) for x in packet]))
                 self.writer.write(packet)
                 await self.writer.drain()
 
@@ -314,7 +311,6 @@ class Panel:
                 if protocol == 1:
                     length = (await self.reader.read(1))[0]
                     data = await self.reader.read(length)
-                    LOGGER.info("Got: %s", str(str([hex(x) for x in data])))
                     if data[0] != expected_response:
                         if data[0] == 0xFD:
                             raise PanelException(NegativeAcknoledgement(data[1]))
