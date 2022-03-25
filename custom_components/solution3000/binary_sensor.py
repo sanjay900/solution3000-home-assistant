@@ -1,4 +1,4 @@
-"""Support for Solutions3000 sensors."""
+"""Support for Solution3000 sensors."""
 from __future__ import annotations
 
 from homeassistant.components.binary_sensor import (
@@ -21,7 +21,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import DOMAIN
 
-from .solutions3000 import Point, Area, PointStatus
+from .solution3000 import Point, Area, PointStatus
 
 
 async def async_setup_entry(
@@ -29,9 +29,9 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Solutions3000 sensors based on a config entry."""
+    """Set up Solution3000 sensors based on a config entry."""
     async_add_entities(
-        Solutions3000SensorEntity(
+        Solution3000SensorEntity(
             coordinator=hass.data[DOMAIN][entry.entry_id],
             entry_id=entry.entry_id,
             area=area,
@@ -42,8 +42,8 @@ async def async_setup_entry(
     )
 
 
-class Solutions3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
-    """Defines an Solutions3000 sensor."""
+class Solution3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
+    """Defines an Solution3000 sensor."""
 
     def __init__(
         self,
@@ -53,7 +53,7 @@ class Solutions3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
         area: Area,
         point: Point,
     ) -> None:
-        """Initialize Solutions3000 sensor."""
+        """Initialize Solution3000 sensor."""
         super().__init__(coordinator=coordinator)
         self.point = point
         self.area = area

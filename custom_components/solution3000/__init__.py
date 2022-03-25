@@ -11,7 +11,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .solutions3000 import Panel, UserType, ArmType
+from .solution3000 import Panel, UserType, ArmType
 from .const import DOMAIN, LOGGER, SERVICE_PANEL, SCAN_INTERVAL
 
 # List of platforms to support. There should be a matching .py file for each,

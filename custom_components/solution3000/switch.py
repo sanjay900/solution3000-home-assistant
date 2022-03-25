@@ -1,4 +1,4 @@
-"""Support for Solutions3000 sensors."""
+"""Support for Solution3000 sensors."""
 from __future__ import annotations
 
 from homeassistant.components.switch import (
@@ -19,7 +19,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import DOMAIN
 
-from .solutions3000 import Output, OutputStatus
+from .solution3000 import Output, OutputStatus
 
 
 async def async_setup_entry(
@@ -27,9 +27,9 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Solutions3000 sensors based on a config entry."""
+    """Set up Solution3000 sensors based on a config entry."""
     async_add_entities(
-        Solutions3000OutputEntity(
+        Solution3000OutputEntity(
             coordinator=hass.data[DOMAIN][entry.entry_id],
             entry_id=entry.entry_id,
             output=output,
@@ -38,8 +38,8 @@ async def async_setup_entry(
     )
 
 
-class Solutions3000OutputEntity(CoordinatorEntity, SwitchEntity):
-    """Defines an Solutions3000 sensor."""
+class Solution3000OutputEntity(CoordinatorEntity, SwitchEntity):
+    """Defines an Solution3000 sensor."""
 
     def __init__(
         self,
@@ -48,7 +48,7 @@ class Solutions3000OutputEntity(CoordinatorEntity, SwitchEntity):
         entry_id: str,
         output: Output,
     ) -> None:
-        """Initialize Solutions3000 sensor."""
+        """Initialize Solution3000 sensor."""
         super().__init__(coordinator=coordinator)
         self.output = output
         self.entity_id = f"{COMPONENT_DOMAIN}.output_{output.id}"

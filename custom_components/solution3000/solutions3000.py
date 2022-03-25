@@ -18,10 +18,10 @@ class Commands(Enum):
     ReqTextHistoryEvents = 0x16
     ResetSensors = 0x18
     SilenceBells = 0x19
+    ReqPanelCapacitie = 0x1F
     ReqAlarmMemoryPriorities = 0x21
     ReqAlarmAreasByPriority = 0x22
     ReqConfiguredAreas = 0x24
-    ReqPanelCapacitie = 0x1F
     ReqAreaStatus = 0x26
     ArmPanelAreas = 0x27
     ReqAreaText = 0x29

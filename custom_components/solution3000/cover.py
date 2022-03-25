@@ -1,4 +1,4 @@
-"""Support for Solutions3000 sensors."""
+"""Support for Solution3000 sensors."""
 from __future__ import annotations
 
 from homeassistant.components.cover import (
@@ -22,7 +22,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import DOMAIN
 
-from .solutions3000 import DoorState, Door, Door
+from .solution3000 import DoorState, Door, Door
 
 
 async def async_setup_entry(
@@ -30,9 +30,9 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Solutions3000 sensors based on a config entry."""
+    """Set up Solution3000 sensors based on a config entry."""
     async_add_entities(
-        Solutions3000CoverEntity(
+        Solution3000CoverEntity(
             coordinator=hass.data[DOMAIN][entry.entry_id],
             entry_id=entry.entry_id,
             door=door,
@@ -41,8 +41,8 @@ async def async_setup_entry(
     )
 
 
-class Solutions3000CoverEntity(CoordinatorEntity, CoverEntity):
-    """Defines an Solutions3000 door."""
+class Solution3000CoverEntity(CoordinatorEntity, CoverEntity):
+    """Defines an Solution3000 door."""
 
     def __init__(
         self,
@@ -51,7 +51,7 @@ class Solutions3000CoverEntity(CoordinatorEntity, CoverEntity):
         entry_id: str,
         door: Door,
     ) -> None:
-        """Initialize Solutions3000 sensor."""
+        """Initialize Solution3000 sensor."""
         super().__init__(coordinator=coordinator)
         self.door = door
         self.entity_id = f"{COMPONENT_DOMAIN}.door_{door.id}"

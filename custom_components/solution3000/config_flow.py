@@ -1,4 +1,4 @@
-"""Config flow to configure the Solutions3000 integration."""
+"""Config flow to configure the Solution3000 integration."""
 from __future__ import annotations
 from ipaddress import ip_address
 
@@ -6,7 +6,7 @@ from typing import Any
 
 import voluptuous as vol
 
-from .solutions3000 import Panel, UserType, PanelException
+from .solution3000 import Panel, UserType, PanelException
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow
 from homeassistant.const import (
@@ -21,8 +21,8 @@ from homeassistant.data_entry_flow import FlowResult
 from .const import DOMAIN
 
 
-class Solutions3000FlowHandler(ConfigFlow, domain=DOMAIN):
-    """Config flow for Solutions3000."""
+class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
+    """Config flow for Solution3000."""
 
     VERSION = 1
 

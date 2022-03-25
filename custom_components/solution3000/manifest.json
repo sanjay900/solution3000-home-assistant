@@ -1,8 +1,8 @@
 {
-  "domain": "solutions3000",
+  "domain": "solution3000",
   "name": "Solutions 3000",
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/solutions3000",
+  "documentation": "https://www.home-assistant.io/integrations/solution3000",
   "requirements": [],
   "codeowners": ["@sanjay900"],
   "iot_class": "local_polling",

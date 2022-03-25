@@ -5,7 +5,7 @@ from datetime import timedelta
 import logging
 from typing import Final
 
-DOMAIN = "solutions3000"
+DOMAIN = "solution3000"
 SCAN_INTERVAL = timedelta(seconds=1)
 LOGGER = logging.getLogger(__package__)
 
