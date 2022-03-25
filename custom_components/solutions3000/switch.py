@@ -19,7 +19,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import DOMAIN
 
-from .solution3000 import Output, OutputStatus
+from .solution3000 import Output, OutputStatus, Panel
 
 
 async def async_setup_entry(
@@ -44,7 +44,7 @@ class Solution3000OutputEntity(CoordinatorEntity, SwitchEntity):
     def __init__(
         self,
         *,
-        coordinator: DataUpdateCoordinator,
+        coordinator: DataUpdateCoordinator[Panel],
         entry_id: str,
         output: Output,
     ) -> None:
@@ -56,8 +56,8 @@ class Solution3000OutputEntity(CoordinatorEntity, SwitchEntity):
         self._attr_name = f"Output: {output.name}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}")},
-            manufacturer="bosch",
-            model="solutions 3000",
+            manufacturer="Bosch",
+            model=coordinator.data.panel_type_name(),
             name=f"{output.name}",
         )
 

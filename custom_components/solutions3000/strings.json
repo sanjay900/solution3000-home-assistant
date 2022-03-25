@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "Set up a Solutions 3000 panel to integrate with Home Assistant.",
+        "description": "Set up a Solution 3000 panel to integrate with Home Assistant.",
         "data": {
           "port": "[%key:common::config_flow::data::port%]",
           "ip_address": "[%key:common::config_flow::data::ip%]",

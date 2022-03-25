@@ -47,7 +47,7 @@ SUPPORTED_STATES = [
 
 from .const import DOMAIN
 
-from .solution3000 import ArmType, Area, AreaStatus
+from .solution3000 import ArmType, Area, AreaStatus, Panel
 
 SOLUTIONS3000_TO_ALARM_STATE = {
     AreaStatus.AllOn: STATE_ALARM_ARMED_AWAY,
@@ -82,7 +82,7 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
     def __init__(
         self,
         *,
-        coordinator: DataUpdateCoordinator,
+        coordinator: DataUpdateCoordinator[Panel],
         entry_id: str,
         area: Area,
     ) -> None:
@@ -94,9 +94,9 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
         self._attr_name = f"Area: {area.name}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{entry_id}_{area.name}")},
-            manufacturer="bosch",
-            model="solutions 3000",
-            name=f"{COMPONENT_DOMAIN}_{area.name}",
+            manufacturer="Bosch",
+            model=coordinator.data.panel_type_name(),
+            name=f"{area.name}",
         )
 
     @property

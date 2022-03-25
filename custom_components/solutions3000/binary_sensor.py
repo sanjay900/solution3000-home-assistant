@@ -21,7 +21,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import DOMAIN
 
-from .solution3000 import Point, Area, PointStatus
+from .solution3000 import Panel, Point, Area, PointStatus
 
 
 async def async_setup_entry(
@@ -48,7 +48,7 @@ class Solution3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
     def __init__(
         self,
         *,
-        coordinator: DataUpdateCoordinator,
+        coordinator: DataUpdateCoordinator[Panel],
         entry_id: str,
         area: Area,
         point: Point,
@@ -62,9 +62,9 @@ class Solution3000SensorEntity(CoordinatorEntity, BinarySensorEntity):
         self._attr_name = f"{area.name} - {point.name}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{entry_id}_{area.name}")},
-            manufacturer="bosch",
-            model="solutions 3000",
-            name=f"{area.name} sensors",
+            manufacturer="Bosch",
+            model=coordinator.data.panel_type_name(),
+            name=f"{area.name}",
         )
 
     @property

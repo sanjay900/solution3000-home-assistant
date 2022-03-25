@@ -22,7 +22,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import DOMAIN
 
-from .solution3000 import DoorState, Door, Door
+from .solution3000 import DoorState, Door, Door, Panel
 
 
 async def async_setup_entry(
@@ -47,7 +47,7 @@ class Solution3000CoverEntity(CoordinatorEntity, CoverEntity):
     def __init__(
         self,
         *,
-        coordinator: DataUpdateCoordinator,
+        coordinator: DataUpdateCoordinator[Panel],
         entry_id: str,
         door: Door,
     ) -> None:
@@ -59,8 +59,8 @@ class Solution3000CoverEntity(CoordinatorEntity, CoverEntity):
         self._attr_name = f"Door: {door.name}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{COMPONENT_DOMAIN}_{entry_id}")},
-            manufacturer="bosch",
-            model="solutions 3000",
+            manufacturer="Bosch",
+            model=coordinator.data.panel_type_name(),
             name=f"{door.name}",
         )
 

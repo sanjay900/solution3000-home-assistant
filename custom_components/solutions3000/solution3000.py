@@ -62,6 +62,23 @@ class PanelType(Enum):
     B3512 = 0xA8
     B6512 = 0xA9
 
+PanelTypeNames = {
+    PanelType.Undefined: "Undefined",
+    PanelType.Solution2000: "Solution 2000",
+    PanelType.Solution3000: "Solution 3000",
+    PanelType.AMAX2100: "AMAX 2100",
+    PanelType.AMAX3000: "AMAX 3000",
+    PanelType.AMAX4000: "AMAX 4000",
+    PanelType.D7412GV4: "D7412GV4",
+    PanelType.D9412GV4: "D9412GV4",
+    PanelType.B4512: "B4512",
+    PanelType.B5512: "B5512",
+    PanelType.B8512G: "B8512G",
+    PanelType.B9512G: "B9512G",
+    PanelType.B3512: "B3512",
+    PanelType.B6512: "B6512",
+}
+
 
 class MaxConnectionsInUseFlags(Enum):
     MaxUserBasedRemoteAccessUsersInUse = 0x04
@@ -308,7 +325,8 @@ class Panel:
                 
 
 
-        
+    def panel_type_name(self):
+        return PanelTypeNames[self.panel_type]
 
     async def _send_what_are_you(self):
         data = await self._xfer_packet(Commands.WhatAreYou, 0xFE, [])
