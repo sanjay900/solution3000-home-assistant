@@ -22,3 +22,4 @@ Note that the alarm does not not have an ability to let home assistant know what
 binary_sensor.1_8:
   device_class: smoke
 ```
+A list of all device classes can be found in the [home assistant binary sensor documentation](https://www.home-assistant.io/integrations/binary_sensor/)
