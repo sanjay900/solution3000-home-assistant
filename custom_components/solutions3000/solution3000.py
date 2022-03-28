@@ -304,24 +304,24 @@ class Panel:
                     + bytearray(command_format)
                     + data
                 )
-                    self.writer.write(packet)
-                    await self.writer.drain()
+                self.writer.write(packet)
+                await self.writer.drain()
 
-                    protocol = (await self.reader.read(1))[0]
-                    if protocol == 1:
-                        length = (await self.reader.read(1))[0]
-                        data = await self.reader.read(length)
-                        if data[0] != expected_response:
-                            if data[0] == 0xFD:
-                                raise PanelException(NegativeAcknoledgement(data[1]))
-                            else:
-                                raise PanelException(f"Unknown error {data}")
-                        return data
-                    else:
-                        raise PanelException(f"Unexpected protocol {protocol}")
-            except ConnectionError:
-                await self.initialise()
-                return self._xfer_packet(command, expected_response, command_format, data)
+                protocol = (await self.reader.read(1))[0]
+                if protocol == 1:
+                    length = (await self.reader.read(1))[0]
+                    data = await self.reader.read(length)
+                    if data[0] != expected_response:
+                        if data[0] == 0xFD:
+                            raise PanelException(NegativeAcknoledgement(data[1]))
+                        else:
+                            raise PanelException(f"Unknown error {data}")
+                    return data
+                else:
+                    raise PanelException(f"Unexpected protocol {protocol}")
+        except ConnectionError:
+            await self.initialise()
+            return self._xfer_packet(command, expected_response, command_format, data)
 
 
     def panel_type_name(self):
