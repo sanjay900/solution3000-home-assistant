@@ -1,8 +1,8 @@
-import socket
 import ssl
 from enum import Enum
 import asyncio
 from typing import Union
+
 
 class UserType(Enum):
     InstallerApp = 0x00
@@ -61,6 +61,7 @@ class PanelType(Enum):
     B9512G = 0xA7
     B3512 = 0xA8
     B6512 = 0xA9
+
 
 PanelTypeNames = {
     PanelType.Undefined: "Undefined",
@@ -282,7 +283,6 @@ class Panel:
         self.areas = []
         self.outputs = []
         self.doors = []
-        self.lock = asyncio.Lock()
 
     async def _xfer_packet(
         self,
@@ -291,39 +291,36 @@ class Panel:
         command_format: list[int] = None,
         data: Union[list[int], bytearray] = None,
     ):
-        async with self.lock:
-            command_format = command_format or []
-            data = data or []
-            if not isinstance(data, bytearray):
-                data = bytearray(data)
-            length = 1 + len(command_format) + len(data)
-            protocol = 0x01
-            packet = (
-                bytearray([protocol, length, command.value])
-                + bytearray(command_format)
-                + data
-            )
-            try:
-                self.writer.write(packet)
-                await self.writer.drain()
+        command_format = command_format or []
+        data = data or []
+        if not isinstance(data, bytearray):
+            data = bytearray(data)
+        length = 1 + len(command_format) + len(data)
+        protocol = 0x01
+        packet = (
+            bytearray([protocol, length, command.value])
+            + bytearray(command_format)
+            + data
+        )
+        try:
+            self.writer.write(packet)
+            await self.writer.drain()
 
-                protocol = (await self.reader.read(1))[0]
-                if protocol == 1:
-                    length = (await self.reader.read(1))[0]
-                    data = await self.reader.read(length)
-                    if data[0] != expected_response:
-                        if data[0] == 0xFD:
-                            raise PanelException(NegativeAcknoledgement(data[1]))
-                        else:
-                            raise PanelException(f"Unknown error {data}")
-                    return data
-                else:
-                    raise PanelException(f"Unexpected protocol {protocol}")
-            except ConnectionError:
-                await self.initialise()
-                return self._xfer_packet(command, expected_response, command_format, data)
-                
-
+            protocol = (await self.reader.read(1))[0]
+            if protocol == 1:
+                length = (await self.reader.read(1))[0]
+                data = await self.reader.read(length)
+                if data[0] != expected_response:
+                    if data[0] == 0xFD:
+                        raise PanelException(NegativeAcknoledgement(data[1]))
+                    else:
+                        raise PanelException(f"Unknown error {data}")
+                return data
+            else:
+                raise PanelException(f"Unexpected protocol {protocol}")
+        except ConnectionError:
+            await self.initialise()
+            return self._xfer_packet(command, expected_response, command_format, data)
 
     def panel_type_name(self):
         return PanelTypeNames[self.panel_type]
