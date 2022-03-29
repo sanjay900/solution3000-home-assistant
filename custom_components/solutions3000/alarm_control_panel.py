@@ -132,3 +132,8 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
         self.area.status = AreaStatus.PartOnExitDelay
         self.async_schedule_update_ha_state()
         await self.coordinator.data.arm(ArmType.Stay2, [self.area])
+
+    
+    @property
+    def extra_state_attributes(self):
+        return {"panel_history": "\n".join([f"Date: {message.datetime}, Message: {message.text}" for message in self.coordinator.data.history_messages])}
