@@ -435,7 +435,7 @@ class Panel:
                 self.last_history_message += count
         except PanelException as e:
             # If we get a NonSpecificError while reading history it just means that the history data is currently being updated.
-            if not e.args[0] == NegativeAcknoledgement.NonSpecificError:
+            if not e.args[0] == "Bosch Panel Error NonSpecificError":
                 raise e
 
     async def _req_capacities(self):
