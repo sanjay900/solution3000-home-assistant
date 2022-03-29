@@ -3,17 +3,31 @@ import ssl
 from enum import Enum
 import asyncio
 from typing import Union
+import struct
+import datetime
+
+from .bosch_history import parse_history_message
 
 class UserType(Enum):
     InstallerApp = 0x00
     AutomationUser = 0x01
     RemoteUser = 0x02
 
-
 class Commands(Enum):
     WhatAreYou = 0x01
+    SetupEncryptionCommandCode = 0x02
+    PublicKeyCommand = 0x03
+    CheckEncryptionCommand = 0x04
     TerminateSession = 0x05
     Passcode = 0x06
+    ReqPermissionForPanelAction = 0x07
+    ReqAlarmMemorySummary = 0x08
+    ReqAllowedAreasForAreaAction = 0x09
+    ReqAllowedDoorsForDoorAction = 0x0a
+    ReqPermissionForOutputAction = 0x0b
+    ReqAllowedPointsForPointAction = 0x0c
+    SetPanelTimeCommandCode = 0x11
+    ReqPanelTimeCommandCode = 0x12
     ReqRawHistoryEvents = 0x15
     ReqTextHistoryEvents = 0x16
     ResetSensors = 0x18
@@ -21,6 +35,7 @@ class Commands(Enum):
     ReqPanelCapacitie = 0x1F
     ReqAlarmMemoryPriorities = 0x21
     ReqAlarmAreasByPriority = 0x22
+    ReqAlarmMemoryDetail = 0x23
     ReqConfiguredAreas = 0x24
     ReqAreaStatus = 0x26
     ArmPanelAreas = 0x27
@@ -41,9 +56,17 @@ class Commands(Enum):
     BypassPoints = 0x3A
     UnbypassPoints = 0x3B
     ReqPointText = 0x3C
-    Pincode = 0x3E
+    LoginUserCommandCode = 0x3E
     ReqUser = 0x40
+    ReqCameraNamesCommandCode = 0x54
+    ReqCameraLiveViewerDataCommand = 0x55
+    ReqConfiguredCamerasCommandCode = 0x56
     SetSubscriptions = 0x5F
+    UserBasedLoginCommandCode = 0x62
+    GetRawHistoryEventsExtended = 0x63
+    ReqBypassedPointsExt = 0x65
+    ServiceBypassPointsCommand = 0x66
+    ReqPanelLanguageCommandCode = 0xcc
 
 
 class PanelType(Enum):
@@ -61,6 +84,14 @@ class PanelType(Enum):
     B9512G = 0xA7
     B3512 = 0xA8
     B6512 = 0xA9
+
+class EventCategories(Enum):
+    NoEvents = 0x00
+    AlarmEvent = 0x01
+    SystemEvent = 0x02
+    ArmingEvent = 0x04
+    DisabledEvent = 0x08
+    AllEvents = 0x0F
 
 PanelTypeNames = {
     PanelType.Undefined: "Undefined",
@@ -257,6 +288,16 @@ class Area(Component):
     def __str__(self) -> str:
         return f"Area(id={self.id}, name={self.name}, status={self.status}, points={', '.join(map(Point.__str__, self.points))})"
 
+class HistoryMessage():
+    def __init__(self, datetime, message, event_code, first_param, second_param) -> None:
+        self.datetime = datetime
+        self.message = message
+        self.event_code = event_code
+        self.first_param = first_param
+        self.second_param = second_param
+        
+    def __str__(self) -> str:
+        return f"HistoryMessage(datetime={self.datetime}, message={self.message}, event_code={self.event_code})"
 
 class Panel:
     areas: list[Area]
@@ -283,6 +324,8 @@ class Panel:
         self.outputs = []
         self.doors = []
         self.lock = asyncio.Lock()
+        self.last_history_message = 0
+        self.history_messages = []
 
     async def _xfer_packet(
         self,
@@ -363,7 +406,33 @@ class Panel:
             pincode_num = int(str(self.pincode), 16)
             pincode_low = pincode_num & 0xFF
             pincode_high = (pincode_num >> 8) & 0xFF
-            await self._xfer_packet(Commands.Pincode, 0xFE, [], [pincode_high, pincode_low])
+            await self._xfer_packet(Commands.LoginUserCommandCode, 0xFE, [], [pincode_high, pincode_low])
+
+    async def _req_history(self):
+        # We get data chunked, so just read until we run out of data.
+        while True:
+            data = await self._xfer_packet(Commands.GetRawHistoryEventsExtended, 0xFE, [0xff],struct.pack(">i",self.last_history_message))
+            count = struct.unpack("<i", data[1:5])[0]
+            if not count:
+                break
+            data = data[6:]
+            for i in range(count):
+                start = i*8
+                end = start + 8
+                section = data[start:end]
+                year = 2000 + ((section[3] & 0xFC) >> 2)
+                month = ((section[3] & 3) << 2) | ((section[2] & 0xC0) >> 6)
+                day = (section[1] & 0xF8) >> 3
+                hour = ((section[1] & 7) << 2) | ((section[0] & 0xC0) >> 6)
+                minute = section[0] & 0x3F
+                second = section[2] & 0x3F
+                first_param=section[5] * 256 + section[4]
+                second_param=section[7]
+                event_code=section[6]
+                date = datetime.datetime(year,month,day,hour,minute,second)
+                self.history_messages.append(HistoryMessage(date, parse_history_message(event_code, first_param, second_param, self.panel_type.name), event_code, first_param, second_param))
+            self.last_history_message += count
+            
 
     async def _req_capacities(self):
         data = await self._xfer_packet(Commands.ReqPanelCapacitie, 0xFE)
@@ -480,6 +549,7 @@ class Panel:
         await self._req_data_status(
             Commands.ReqOutputStatus, [], self.outputs, OutputStatus
         )
+        await self._req_history()
         return self
 
     async def initialise(self):
@@ -507,4 +577,4 @@ intrusion_integration_protocol_version={self.intrusion_integration_protocol_vers
 max_areas={self.max_areas}, max_points={self.max_points}, max_users={self.max_users}, max_keypads={self.max_keypads}, max_doors={self.max_doors}, \
 areas=[{', '.join(map(Area.__str__, self.areas))}]), \
 doors=[{', '.join(map(Door.__str__, self.doors))}]), \
-outputs=[{', '.join(map(Output.__str__, self.outputs))}])"
+outputs=[{', '.join(map(Output.__str__, self.outputs))}]), history=[{', '.join(map(HistoryMessage.__str__, self.history_messages))}])"
