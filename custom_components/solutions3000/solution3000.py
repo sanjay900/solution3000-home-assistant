@@ -409,30 +409,34 @@ class Panel:
             await self._xfer_packet(Commands.LoginUserCommandCode, 0xFE, [], [pincode_high, pincode_low])
 
     async def _req_history(self):
+        try:
         # We get data chunked, so just read until we run out of data.
-        while True:
-            data = await self._xfer_packet(Commands.GetRawHistoryEventsExtended, 0xFE, [0xff],struct.pack(">i",self.last_history_message))
-            count = struct.unpack("<i", data[1:5])[0]
-            if not count:
-                break
-            data = data[6:]
-            for i in range(count):
-                start = i*8
-                end = start + 8
-                section = data[start:end]
-                year = 2000 + ((section[3] & 0xFC) >> 2)
-                month = ((section[3] & 3) << 2) | ((section[2] & 0xC0) >> 6)
-                day = (section[1] & 0xF8) >> 3
-                hour = ((section[1] & 7) << 2) | ((section[0] & 0xC0) >> 6)
-                minute = section[0] & 0x3F
-                second = section[2] & 0x3F
-                first_param=section[5] * 256 + section[4]
-                second_param=section[7]
-                event_code=section[6]
-                date = datetime.datetime(year,month,day,hour,minute,second)
-                self.history_messages.append(HistoryMessage(date, parse_history_message(event_code, first_param, second_param, self.panel_type.name), event_code, first_param, second_param))
-            self.last_history_message += count
-            
+            while True:
+                data = await self._xfer_packet(Commands.GetRawHistoryEventsExtended, 0xFE, [0xff],struct.pack(">i",self.last_history_message))
+                count = struct.unpack("<i", data[1:5])[0]
+                if not count:
+                    break
+                data = data[6:]
+                for i in range(count):
+                    start = i*8
+                    end = start + 8
+                    section = data[start:end]
+                    year = 2000 + ((section[3] & 0xFC) >> 2)
+                    month = ((section[3] & 3) << 2) | ((section[2] & 0xC0) >> 6)
+                    day = (section[1] & 0xF8) >> 3
+                    hour = ((section[1] & 7) << 2) | ((section[0] & 0xC0) >> 6)
+                    minute = section[0] & 0x3F
+                    second = section[2] & 0x3F
+                    first_param=section[5] * 256 + section[4]
+                    second_param=section[7]
+                    event_code=section[6]
+                    date = datetime.datetime(year,month,day,hour,minute,second)
+                    self.history_messages.append(HistoryMessage(date, parse_history_message(event_code, first_param, second_param, self.panel_type.name), event_code, first_param, second_param))
+                self.last_history_message += count
+        except PanelException as e:
+            # If we get a NonSpecificError while reading history it just means that the history data is currently being updated.
+            if not e.args[0] == NegativeAcknoledgement.NonSpecificError:
+                raise e
 
     async def _req_capacities(self):
         data = await self._xfer_packet(Commands.ReqPanelCapacitie, 0xFE)
