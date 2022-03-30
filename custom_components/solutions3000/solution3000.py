@@ -419,7 +419,7 @@ class Panel:
             while True:
                 data = await self._xfer_packet(Commands.GetRawHistoryEventsExtended, 0xFE, [0xff],struct.pack(">i",self.last_history_message))
                 count = struct.unpack("<i", data[1:5])[0]
-                if not count:
+                if not count or len(data) <= 6:
                     break
                 data = data[6:]
                 for i in range(count):
