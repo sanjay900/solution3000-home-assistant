@@ -569,8 +569,9 @@ class Panel:
         await self._req_capacities()
         await self._req_areas()
 
-    def close(self):
-        self.writer.close()
+    async def close(self):
+        async with self.lock:
+            self.writer.close()
 
     def __del__(self):
         self.close()
