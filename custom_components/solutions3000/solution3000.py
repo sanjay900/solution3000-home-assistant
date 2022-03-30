@@ -364,7 +364,7 @@ class Panel:
                     raise PanelException(f"Unexpected protocol {protocol}")
         except ConnectionError:
             await self.initialise()
-            return self._xfer_packet(command, expected_response, command_format, data)
+            return await self._xfer_packet(command, expected_response, command_format, data)
 
 
     def panel_type_name(self):
