@@ -6,7 +6,7 @@ from typing import Union
 import struct
 import datetime
 
-from .bosch_history import parse_history_message
+from bosch_history import parse_history_message
 
 class UserType(Enum):
     InstallerApp = 0x00
@@ -398,7 +398,7 @@ class Panel:
             Commands.Passcode, 0xFE, [], bytearray(self.passcode, "utf-8")
         )
         if data[1] == 0:
-            raise PanelException("Invalid App Passcode")
+            raise PanelException("Error authenticating with automation code, is it correct?")
         if data[1] == 2:
             raise PanelException("Panel is busy")
         # Solution3000 requires another round of authentication
@@ -406,8 +406,12 @@ class Panel:
             pincode_num = int(str(self.pincode), 16)
             pincode_low = pincode_num & 0xFF
             pincode_high = (pincode_num >> 8) & 0xFF
-            await self._xfer_packet(Commands.LoginUserCommandCode, 0xFE, [], [pincode_high, pincode_low])
-
+            try:
+                await self._xfer_packet(Commands.LoginUserCommandCode, 0xFE, [], [pincode_high, pincode_low])
+            except PanelException as e:
+                if e.args[0] == "Bosch Panel Error NonSpecificError":
+                    raise PanelException("Error authenticating with A-Link pin, is it correct?")
+                raise e
     async def _req_history(self):
         try:
         # We get data chunked, so just read until we run out of data.
@@ -574,7 +578,7 @@ class Panel:
             self.writer.close()
 
     def __del__(self):
-        self.close()
+        self.writer.close()
 
     def __str__(self) -> str:
         return f"Panel(ip={self.ip}, port={self.port}, type={self.panel_type.name}, rps_protocol_version={self.rps_protocol_version}, \
