@@ -6,7 +6,6 @@
         "data": {
           "port": "[%key:common::config_flow::data::port%]",
           "ip_address": "[%key:common::config_flow::data::ip%]",
-          "password": "[%key:common::config_flow::data::password%]",
           "pin": "[%key:common::config_flow::data::pin%]"
         }
       }

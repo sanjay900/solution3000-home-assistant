@@ -1,5 +1,7 @@
 """Support for Solution3000 sensors."""
 from __future__ import annotations
+from .solution3000 import ArmType, Area, AreaStatus, Panel
+from .const import DOMAIN
 
 from homeassistant.components.alarm_control_panel import (
     DOMAIN as COMPONENT_DOMAIN,
@@ -45,9 +47,6 @@ SUPPORTED_STATES = [
     STATE_ALARM_TRIGGERED,
 ]
 
-from .const import DOMAIN
-
-from .solution3000 import ArmType, Area, AreaStatus, Panel
 
 SOLUTIONS3000_TO_ALARM_STATE = {
     AreaStatus.AllOn: STATE_ALARM_ARMED_AWAY,
@@ -133,7 +132,6 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
         self.async_schedule_update_ha_state()
         await self.coordinator.data.arm(ArmType.Stay2, [self.area])
 
-    
     @property
     def extra_state_attributes(self):
         messages = self.coordinator.data.history_messages.copy()

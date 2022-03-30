@@ -12,7 +12,6 @@
             "user": {
                 "data": {
                     "ip_address": "IP Address",
-                    "password": "Automation Code",
                     "port": "Port",
                     "pin": "ALink Pin"
                 },

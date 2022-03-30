@@ -7,7 +7,6 @@ from homeassistant.const import (
     CONF_PORT,
     CONF_IP_ADDRESS,
     CONF_PIN,
-    CONF_PASSWORD,
 )
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -23,9 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     panel = Panel(
         entry.data[CONF_PORT],
         entry.data[CONF_IP_ADDRESS],
-        UserType.InstallerApp,
-        entry.data[CONF_PASSWORD],
-        entry.data[CONF_PIN],
+        entry.data[CONF_PIN]
     )
     await panel.initialise()
     panel_update: DataUpdateCoordinator[Panel] = DataUpdateCoordinator(

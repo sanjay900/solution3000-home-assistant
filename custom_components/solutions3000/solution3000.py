@@ -303,12 +303,10 @@ class Panel:
     areas: list[Area]
 
     def __init__(
-        self, port: int, ip: str, user_type: UserType, passcode: str, pincode: str
+        self, port: int, ip: str, pincode: str
     ) -> None:
         self.port = port
         self.ip = ip
-        self.user_type = user_type
-        self.passcode = passcode
         self.pincode = pincode
         self.panel_type = PanelType.Undefined
         self.rps_protocol_version = ProtocolVersion(0, 0, 0)
@@ -389,19 +387,7 @@ class Panel:
             raise PanelException("Max Automation Users In Use")
 
     async def _authenticate(self):
-        if len(self.passcode) > 24 or len(self.passcode) < 6:
-            raise PanelException("Invalid Passcode Length")
-        if len(self.passcode) < 24:
-            self.passcode += " "
-        self.passcode = "\x00" + self.passcode
-        data = await self._xfer_packet(
-            Commands.Passcode, 0xFE, [], bytearray(self.passcode, "utf-8")
-        )
-        if data[1] == 0:
-            raise PanelException("Error authenticating with automation code, is it correct?")
-        if data[1] == 2:
-            raise PanelException("Panel is busy")
-        # Solution3000 requires another round of authentication
+        # Solution2000 / 3000 uses a a-link pin code, the others use a automation passcode
         if self.panel_type == PanelType.Solution3000 or self.panel_type == PanelType.Solution2000:
             pincode_num = int(str(self.pincode), 16)
             pincode_low = pincode_num & 0xFF
@@ -410,8 +396,21 @@ class Panel:
                 await self._xfer_packet(Commands.LoginUserCommandCode, 0xFE, [], [pincode_high, pincode_low])
             except PanelException as e:
                 if e.args[0] == "Bosch Panel Error NonSpecificError":
-                    raise PanelException("Error authenticating with A-Link pin, is it correct?")
+                    raise PanelException("Error authenticating with alink code, is it correct?")
                 raise e
+        else:
+            if len(self.pincode) > 24 or len(self.pincode) < 6:
+                raise PanelException("Invalid Passcode Length")
+            if len(self.pincode) < 24:
+                self.pincode += " "
+            self.pincode = "\x00" + self.pincode
+            data = await self._xfer_packet(
+                Commands.Passcode, 0xFE, [], bytearray(self.pincode, "utf-8")
+            )
+            if data[1] == 0:
+                raise PanelException("Error authenticating with automation code, is it correct?")
+            if data[1] == 2:
+                raise PanelException("Panel is busy")
     async def _req_history(self):
         try:
         # We get data chunked, so just read until we run out of data.
