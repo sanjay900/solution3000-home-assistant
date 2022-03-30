@@ -39,8 +39,6 @@ class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
                 panel = Panel(
                     port=user_input[CONF_PORT],
                     ip=user_input[CONF_IP_ADDRESS],
-                    user_type=UserType.InstallerApp,
-                    passcode=user_input[CONF_PASSWORD],
                     pincode=user_input[CONF_PIN],
                 )
                 await panel.initialise()
@@ -54,7 +52,6 @@ class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
                     data={
                         CONF_PORT: user_input[CONF_PORT],
                         CONF_IP_ADDRESS: user_input[CONF_IP_ADDRESS],
-                        CONF_PASSWORD: user_input[CONF_PASSWORD],
                         CONF_PIN: user_input[CONF_PIN],
                     },
                 )
@@ -66,7 +63,6 @@ class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
                     vol.Optional(CONF_PORT, default=7700): int,
                     vol.Required(CONF_IP_ADDRESS): str,
                     vol.Required(CONF_PIN): int,
-                    vol.Optional(CONF_PASSWORD, default="0000000000"): str,
                     vol.Optional(
                         CONF_NAME, default=self.hass.config.location_name
                     ): str,
