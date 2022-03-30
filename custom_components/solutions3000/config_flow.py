@@ -42,7 +42,7 @@ class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
                     pincode=user_input[CONF_PIN],
                 )
                 await panel.initialise()
-                panel.close()
+                await panel.close()
             except PanelException as e:
                 print(e)
                 errors["base"] = " ".join(str(r) for r in e.args)
