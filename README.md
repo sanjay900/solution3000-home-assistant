@@ -23,3 +23,5 @@ binary_sensor.1_8:
   device_class: smoke
 ```
 A list of all device classes can be found in the [home assistant binary sensor documentation](https://www.home-assistant.io/integrations/binary_sensor/)
+
+Note that if you get an "Invalid App Passcode" error, this means that the panel has refused authentication. This can happen if another connection is active to the panel, such as a A-Link or RSC+ app being connected to the panel. 
