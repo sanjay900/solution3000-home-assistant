@@ -136,6 +136,6 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
     
     @property
     def extra_state_attributes(self):
-        messages = self.coordinator.data.history_messages
+        messages = list(self.coordinator.data.history_messages)
         messages.reverse()
         return {"panel_history": "\n".join([f"{message.datetime} | {message.message}" for message in messages])}
