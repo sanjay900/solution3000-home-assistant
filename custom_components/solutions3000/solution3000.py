@@ -347,8 +347,10 @@ class Panel:
                 )
                 self.writer.write(packet)
                 await self.writer.drain()
-
-                protocol = (await self.reader.read(1))[0]
+                data = await self.reader.read(1)
+                if not data:
+                    raise ConnectionError()
+                protocol = data[0]
                 if protocol == 1:
                     length = (await self.reader.read(1))[0]
                     data = await self.reader.read(length)
