@@ -6,7 +6,7 @@ from typing import Union
 import struct
 import datetime
 
-from bosch_history import parse_history_message
+from .bosch_history import parse_history_message
 
 class UserType(Enum):
     InstallerApp = 0x00
