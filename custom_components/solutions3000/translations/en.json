@@ -13,7 +13,7 @@
                 "data": {
                     "ip_address": "IP Address",
                     "port": "Port",
-                    "pin": "ALink Pin"
+                    "pin": "RSC+ User Code"
                 },
                 "description": "Set up a Solution 3000 panel to integrate with Home Assistant.",
                 "title": "Solution 3000"
