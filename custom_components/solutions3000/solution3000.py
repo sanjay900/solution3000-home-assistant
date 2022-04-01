@@ -6,7 +6,7 @@ from typing import Union
 import struct
 import datetime
 
-from .bosch_history import parse_history_message
+from bosch_history import parse_history_message
 
 class UserType(Enum):
     InstallerApp = 0x00
@@ -418,10 +418,10 @@ class Panel:
         # We get data chunked, so just read until we run out of data.
             while True:
                 data = await self._xfer_packet(Commands.GetRawHistoryEventsExtended, 0xFE, [0xff],struct.pack(">i",self.last_history_message))
-                count = struct.unpack("<i", data[1:5])[0]
-                if not count or len(data) <= 6:
+                if len(data) <= 6:
                     break
                 data = data[6:]
+                count = len(data) // 8
                 for i in range(count):
                     start = i*8
                     end = start + 8
