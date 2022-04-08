@@ -32,12 +32,12 @@ async def async_setup_entry(
     """Set up Solution3000 sensors based on a config entry."""
     async_add_entities(
         Solution3000SensorEntity(
-            coordinator=hass.data[DOMAIN][entry.entry_id],
+            coordinator=hass.data[DOMAIN][entry.entry_id]["panel_update"],
             entry_id=entry.entry_id,
             area=area,
             point=point,
         )
-        for area in hass.data[DOMAIN][entry.entry_id].data.areas
+        for area in hass.data[DOMAIN][entry.entry_id]["panel_update"].data.areas
         for point in area.points
     )
 

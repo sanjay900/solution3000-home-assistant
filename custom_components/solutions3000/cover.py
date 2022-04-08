@@ -33,11 +33,11 @@ async def async_setup_entry(
     """Set up Solution3000 sensors based on a config entry."""
     async_add_entities(
         Solution3000CoverEntity(
-            coordinator=hass.data[DOMAIN][entry.entry_id],
+            coordinator=hass.data[DOMAIN][entry.entry_id]["panel_update"],
             entry_id=entry.entry_id,
             door=door,
         )
-        for door in hass.data[DOMAIN][entry.entry_id].data.doors
+        for door in hass.data[DOMAIN][entry.entry_id]["panel_update"].data.doors
     )
 
 

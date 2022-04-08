@@ -303,8 +303,10 @@ class Panel:
     areas: list[Area]
 
     def __init__(
-        self, port: int, ip: str, pincode: str
+        self, port: int, ip: str, pincode: str, show_history: bool, history_count: int
     ) -> None:
+        self.show_history = show_history
+        self.history_count = history_count
         self.port = port
         self.ip = ip
         self.pincode = pincode
@@ -558,7 +560,8 @@ class Panel:
         await self._req_data_status(
             Commands.ReqOutputStatus, [], self.outputs, OutputStatus
         )
-        await self._req_history()
+        if self.show_history:
+            await self._req_history()
         return self
 
     async def initialise(self):

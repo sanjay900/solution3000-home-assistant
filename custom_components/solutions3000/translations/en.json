@@ -1,23 +1,40 @@
 {
-    "config": {
-        "abort": {
-            "already_setup": "Already configured. Only a single configuration possible.",
-            "authorize_url_timeout": "Timeout generating authorize URL.",
-            "connection_error": "Failed to connect"
+  "config": {
+    "abort": {
+      "already_setup": "Already configured. Only a single configuration possible.",
+      "authorize_url_timeout": "Timeout generating authorize URL.",
+      "connection_error": "Failed to connect"
+    },
+    "create_entry": {
+      "default": "Successfully authenticated"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "ip_address": "IP Address",
+          "port": "Port",
+          "pin": "RSC+ User Code",
+          "show_history": "Pull the history from the panel.",
+          "history_count": "How many records should we pull from the history? Use 0 to pull all records."
         },
-        "create_entry": {
-            "default": "Successfully authenticated"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "ip_address": "IP Address",
-                    "port": "Port",
-                    "pin": "RSC+ User Code"
-                },
-                "description": "Set up a Solution 3000 panel to integrate with Home Assistant.",
-                "title": "Solution 3000"
-            }
-        }
+        "description": "Set up a Solution 3000 panel to integrate with Home Assistant.",
+        "title": "Solution 3000"
+      }
     }
+  },
+  "options": {
+    "error": {
+      "invalid_path": "The path provided is not valid. Should be in the format `user/repo-name` and should be a valid github repository."
+    },
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "show_history": "Pull the history from the panel.",
+          "history_count": "How many records should we pull from the history? Use 0 to pull all records."
+        },
+        "description": "History options"
+      }
+    }
+  }
 }

@@ -30,11 +30,11 @@ async def async_setup_entry(
     """Set up Solution3000 sensors based on a config entry."""
     async_add_entities(
         Solution3000OutputEntity(
-            coordinator=hass.data[DOMAIN][entry.entry_id],
+            coordinator=hass.data[DOMAIN][entry.entry_id]["panel_update"],
             entry_id=entry.entry_id,
             output=output,
         )
-        for output in hass.data[DOMAIN][entry.entry_id].data.outputs
+        for output in hass.data[DOMAIN][entry.entry_id]["panel_update"].data.outputs
     )
 
 

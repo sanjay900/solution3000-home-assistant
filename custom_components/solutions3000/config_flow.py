@@ -8,7 +8,7 @@ import voluptuous as vol
 
 from .solution3000 import Panel, UserType, PanelException
 
-from homeassistant.config_entries import ConfigEntry, ConfigFlow
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow, callback
 from homeassistant.const import (
     CONF_PORT,
     CONF_IP_ADDRESS,
@@ -18,15 +18,46 @@ from homeassistant.const import (
 )
 from homeassistant.data_entry_flow import FlowResult
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_HISTORY, CONF_HISTORY_COUNT
 
+class OptionsFlowHandler(OptionsFlow):
+    def __init__(self, config_entry):
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_HISTORY,
+                        default=self.config_entry.options.get(CONF_HISTORY),
+                    ): bool,
+
+                    vol.Required(
+                        CONF_HISTORY_COUNT,
+                        default=self.config_entry.options.get(CONF_HISTORY_COUNT),
+                    ): int
+                }
+            ),
+        )
 
 class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Solution3000."""
 
-    VERSION = 1
+    VERSION = 2
 
     entry: ConfigEntry | None = None
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return OptionsFlowHandler(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -65,7 +96,7 @@ class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_PIN): int,
                     vol.Optional(
                         CONF_NAME, default=self.hass.config.location_name
-                    ): str,
+                    ): str
                 }
             ),
             errors=errors,
