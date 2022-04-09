@@ -50,7 +50,7 @@ class OptionsFlowHandler(OptionsFlow):
 class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Solution3000."""
 
-    VERSION = 2
+    VERSION = 1
 
     entry: ConfigEntry | None = None
 
