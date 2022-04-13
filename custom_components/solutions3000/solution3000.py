@@ -326,6 +326,7 @@ class Panel:
         self.lock = asyncio.Lock()
         self.last_history_message = 0
         self.history_messages = []
+        self.writer = None
 
     async def _xfer_packet(
         self,
@@ -579,10 +580,12 @@ class Panel:
 
     async def close(self):
         async with self.lock:
-            self.writer.close()
+            if self.writer:
+                self.writer.close()
 
     def __del__(self):
-        self.writer.close()
+            if self.writer:
+                self.writer.close()
 
     def __str__(self) -> str:
         return f"Panel(ip={self.ip}, port={self.port}, type={self.panel_type.name}, rps_protocol_version={self.rps_protocol_version}, \
