@@ -50,7 +50,7 @@ class OptionsFlowHandler(OptionsFlow):
 class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
     """Config flow for Solution3000."""
 
-    VERSION = 2
+    VERSION = 1
 
     entry: ConfigEntry | None = None
 
@@ -71,6 +71,8 @@ class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
                     port=user_input[CONF_PORT],
                     ip=user_input[CONF_IP_ADDRESS],
                     pincode=user_input[CONF_PIN],
+                    show_history=False,
+                    history_count=20
                 )
                 await panel.initialise()
                 await panel.close()
