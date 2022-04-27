@@ -366,6 +366,7 @@ class Panel:
                 else:
                     raise PanelException(f"Unexpected protocol {protocol}")
         except ConnectionError:
+            await self.close()
             await self.initialise()
             return await self._xfer_packet(command, expected_response, command_format, data)
 
