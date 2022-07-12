@@ -142,4 +142,4 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
         messages.reverse()
         if self.coordinator.data.history_count:
             messages = messages[:self.coordinator.data.history_count]
-        return {"panel_history": "\n".join([f"{message.datetime} | {message.message}" for message in messages]), "area_alarms": "\n".join([x.name() for x in self.area.alarms])}
+        return {"panel_history": "\n".join([f"{message.datetime} | {message.message}" for message in messages]), "area_alarms": "\n".join([x.name for x in self.area.alarms])}

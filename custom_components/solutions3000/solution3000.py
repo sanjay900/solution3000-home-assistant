@@ -454,21 +454,6 @@ class Panel:
                     second_param=section[7]
                     event_code=section[6]
                     date = datetime.datetime(year,month,day,hour,minute,second)
-                    if self.last_history_message:
-                        if "Solution" in self.panel_type_name:
-                            if event_code == 1:
-                                zone = first_param
-                                # Alarm trigger
-                                pass
-                            elif event_code == 2:
-                                # Alarm restored
-                                pass
-                            elif event_code == 3:
-                                # Tripped, counting down
-                                pass
-                            elif event_code == 4:
-                                # Tripped restore
-                                pass
                     self.history_messages.append(HistoryMessage(date, parse_history_message(event_code, first_param, second_param, self.panel_type.name), event_code, first_param, second_param))
                 self.last_history_message += count
         except PanelException as e:
