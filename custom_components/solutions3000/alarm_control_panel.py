@@ -1,6 +1,6 @@
 """Support for Solution3000 sensors."""
 from __future__ import annotations
-from .solution3000 import ArmType, Area, AreaStatus, Panel
+from .solution3000 import AlarmMemoryPriorities, ArmType, Area, AreaStatus, Panel
 from .const import DOMAIN
 
 from homeassistant.components.alarm_control_panel import (
@@ -51,6 +51,7 @@ SUPPORTED_STATES = [
 SOLUTIONS3000_TO_ALARM_STATE = {
     AreaStatus.AllOn: STATE_ALARM_ARMED_AWAY,
     AreaStatus.PartOnDelay: STATE_ALARM_ARMED_NIGHT,
+    AreaStatus.PartOnInstant: STATE_ALARM_ARMED_NIGHT,
     AreaStatus.AllOnEntryDelay: STATE_ALARM_ARMING,
     AreaStatus.PartOnEntryDelay: STATE_ALARM_ARMING,
     AreaStatus.AllOnExitDelay: STATE_ALARM_ARMING,
@@ -101,6 +102,9 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
     @property
     def state(self) -> str | None:
         """Return the state of the sensor."""
+        if self.area.status in [AreaStatus.AllOn, AreaStatus.PartOnDelay, AreaStatus.PartOnInstant]:
+            if AlarmMemoryPriorities.BurglaryAlarm in self.area.alarms:
+                return STATE_ALARM_TRIGGERED
         return SOLUTIONS3000_TO_ALARM_STATE[self.area.status]
 
     @property
