@@ -602,8 +602,23 @@ class Panel:
     async def set_door(self, door: Door, state: int):
         door.status = state
         await self._xfer_packet(Commands.SetDoorState, 0xFC, [], [door.id, state])
-
+    async def _req_area_status(
+        self,
+    ):
+        packet_data = [2]
+        area_by_id = {}
+        for area in self.areas:
+            packet_data.extend([0, area.id])
+            area_by_id[area.id] = area
+        response = await self._xfer_packet(Commands.ReqAreaStatus, 0xFE, [], packet_data)
+        response = response[1:]
+        while response:
+            data_id = response[1]
+            status = response[2]
+            area_by_id[data_id].status = AreaStatus(status)
+            response = response[6:]
     async def update_status(self):
+        await self._req_area_status()
         await self._req_alarm_status()
         for area in self.areas:
             await self._req_data_status(
