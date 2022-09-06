@@ -552,7 +552,6 @@ class Panel:
         for priority in AlarmMemoryPriorities:
             i = (priority.value - 1) * 2
             count = (response[i] >> 8) + response[i+1]
-            print(i, count,priority)
             if count == 0:
                 for area in self.areas:
                     area.alarms.discard(priority)
