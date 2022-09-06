@@ -108,7 +108,7 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
     def state(self) -> str | None:
         """Return the state of the sensor."""
         if self.area.status in [AreaStatus.AllOn, AreaStatus.PartOnDelay, AreaStatus.PartOnInstant]:
-            if AlarmMemoryPriorities.BurgAlarm in self.area.alarms:
+            if AlarmMemoryPriorities.BurglaryAlarm in self.area.alarms:
                 return STATE_ALARM_TRIGGERED
         return SOLUTIONS3000_TO_ALARM_STATE[self.area.status]
 

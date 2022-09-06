@@ -72,24 +72,17 @@ class Commands(Enum):
 
 
 class AlarmMemoryPriorities(Enum):
-    BurgTrouble = 1
-    BurgSupervisory = 2
+    BurglaryTrouble = 1
+    BurglarySupervisory = 2
     GasTrouble = 3
     GasSupervisory = 4
     FireTrouble = 5
     FireSupervisory = 6
-    BurgAlarm = 7
+    BurglaryAlarm = 7
     PersonalEmergency = 8
     GasAlarm = 9
     FireAlarm = 10
     BurglaryTamper = 11
-    BurglaryFault = 12
-    TechnicalFireAlarm = 13
-    TechnicalFireTamper = 14
-    TechnicalFireFault = 15
-    TechnicalGasAlarm = 16
-    TechnicalGasTamper = 17
-    TechnicalGasFault =19
 
 class PanelType(Enum):
     Undefined = 0x00
@@ -553,10 +546,13 @@ class Panel:
     async def _req_alarm_status(
         self
     ):
-        response = await self._xfer_packet(Commands.ReqAlarmMemorySummary, 0xFE, [], [])
+        # With a type of 2, we also get tamper information
+        response = await self._xfer_packet(Commands.ReqAlarmMemorySummary, 0xFE, [2], [])
         response = response[1:]
         for priority in AlarmMemoryPriorities:
-            count = response[20-priority.value]
+            i = (priority.value - 1) * 2
+            count = (response[i] >> 8) + response[i+1]
+            print(i, count,priority)
             if count == 0:
                 for area in self.areas:
                     area.alarms.discard(priority)
