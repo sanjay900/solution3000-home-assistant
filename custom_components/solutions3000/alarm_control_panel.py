@@ -52,11 +52,16 @@ SOLUTIONS3000_TO_ALARM_STATE = {
     AreaStatus.AllOn: STATE_ALARM_ARMED_AWAY,
     AreaStatus.PartOnDelay: STATE_ALARM_ARMED_NIGHT,
     AreaStatus.PartOnInstant: STATE_ALARM_ARMED_NIGHT,
-    AreaStatus.AllOnEntryDelay: STATE_ALARM_ARMING,
-    AreaStatus.PartOnEntryDelay: STATE_ALARM_ARMING,
+    AreaStatus.AllOnEntryDelay: STATE_ALARM_PENDING,
+    AreaStatus.PartOnEntryDelay: STATE_ALARM_PENDING,
     AreaStatus.AllOnExitDelay: STATE_ALARM_ARMING,
     AreaStatus.PartOnExitDelay: STATE_ALARM_ARMING,
     AreaStatus.Disarmed: STATE_ALARM_DISARMED,
+    AreaStatus.StayArm1On: STATE_ALARM_ARMED_NIGHT,
+    AreaStatus.StayArm2On: STATE_ALARM_ARMED_VACATION,
+    AreaStatus.AwayOn: STATE_ALARM_ARMED_AWAY,
+    AreaStatus.AwayExitDelay: STATE_ALARM_ARMING,
+    AreaStatus.AwayEntryDelay: STATE_ALARM_PENDING
 }
 
 

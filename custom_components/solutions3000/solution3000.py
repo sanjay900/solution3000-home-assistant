@@ -213,6 +213,11 @@ class AreaStatus(Enum):
     AllOnExitDelay = 0x07
     PartOnExitDelay = 0x08
     AllOnInstantArmed = 0x09
+    StayArm1On = 0x0A
+    StayArm2On = 0x0B
+    AwayOn = 0x0C
+    AwayExitDelay = 0x0D
+    AwayEntryDelay = 0x0E
 
 
 class PointStatus(Enum):
@@ -529,6 +534,9 @@ class Panel:
                 response = response[3:]
 
     async def _req_alarm_status_details(self, priority: AlarmMemoryPriorities, last_area=None, last_point=None):
+        area_by_id = {}
+        for area in self.areas:
+            area_by_id[area.id] = area
         data = [priority.value]
         if last_area and last_point:
             data = [priority.value, (last_area >> 8) & 0xFF, last_area & 0xFF, (last_point >> 8) & 0xFF, last_point & 0xFF]
@@ -540,7 +548,7 @@ class Panel:
             point = (response_detail[3] << 8) + response_detail[4] 
             if point == 0xFFFF:
                 await self._req_alarm_status_details(priority, area, point)
-            self.areas[area - 1].alarms.add(priority)
+            area_by_id[area].alarms.add(priority)
             response_detail = response_detail[5:]
     async def _req_alarm_status(
         self
