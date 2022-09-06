@@ -8,10 +8,12 @@ import datetime
 
 from .bosch_history import parse_history_message
 
+
 class UserType(Enum):
     InstallerApp = 0x00
     AutomationUser = 0x01
     RemoteUser = 0x02
+
 
 class Commands(Enum):
     WhatAreYou = 0x01
@@ -68,19 +70,26 @@ class Commands(Enum):
     ServiceBypassPointsCommand = 0x66
     ReqPanelLanguageCommandCode = 0xcc
 
+
 class AlarmMemoryPriorities(Enum):
-	Unknown = 0,
-	Tamper = 11,
-	FireAlarm = 10,
-	GasAlarm = 9,
-	PersonalEmergency = 8,
-	BurglaryAlarm = 7,
-	FireSupervisory = 6,
-	FireTrouble = 5,
-	GasSupervisory = 4,
-	GasTrouble = 3,
-	BurglarySupervisory = 2,
-	BurglaryTrouble = 1
+    BurgTrouble = 1
+    BurgSupervisory = 2
+    GasTrouble = 3
+    GasSupervisory = 4
+    FireTrouble = 5
+    FireSupervisory = 6
+    BurgAlarm = 7
+    PersonalEmergency = 8
+    GasAlarm = 9
+    FireAlarm = 10
+    BurglaryTamper = 11
+    BurglaryFault = 12
+    TechnicalFireAlarm = 13
+    TechnicalFireTamper = 14
+    TechnicalFireFault = 15
+    TechnicalGasAlarm = 16
+    TechnicalGasTamper = 17
+    TechnicalGasFault =19
 
 class PanelType(Enum):
     Undefined = 0x00
@@ -297,7 +306,7 @@ class Area(Component):
     def __init__(self, id, name, points: list[Point]) -> None:
         super().__init__(id, name, AreaStatus.Unknown)
         self.points = points
-        self.alarms = []
+        self.alarms = set()
 
     def __str__(self) -> str:
         return f"Area(id={self.id}, name={self.name}, status={self.status}, points={', '.join(map(Point.__str__, self.points))}), alarms={', '.join(map(AlarmMemoryPriorities.__str__, self.alarms))})"
@@ -495,46 +504,6 @@ class Panel:
                     out.append((id + 1, name))
         return out
 
-    async def _req_area_status(
-        self,
-    ):
-
-        packet_data = [2]
-        area_by_id = {}
-        for area in self.areas:
-            packet_data.extend([0, area.id])
-            area_by_id[area.id] = area
-        response = await self._xfer_packet(Commands.ReqAreaStatus, 0xFE, [], packet_data)
-        response = response[1:]
-        while response:
-            data_id = response[1]
-            status = response[2]
-            area_by_id[data_id].status = AreaStatus(status)
-            alarms = []
-            if ((response[3] & 2) == 2):
-                alarms.append(AlarmMemoryPriorities.FireAlarm)
-            if ((response[3] & 1) == 1):
-                alarms.append(AlarmMemoryPriorities.GasAlarm)
-            if ((response[4] & 0x80) == 128):
-                alarms.append(AlarmMemoryPriorities.PersonalEmergency)
-            if ((response[4] & 0x40) == 64):
-                alarms.append(AlarmMemoryPriorities.BurglaryAlarm)
-            if ((response[4] & 0x20) == 32):
-                alarms.append(AlarmMemoryPriorities.FireSupervisory)
-            if ((response[4] & 0x10) == 16):
-                alarms.append(AlarmMemoryPriorities.FireTrouble)
-            if ((response[4] & 8) == 8):
-                alarms.append(AlarmMemoryPriorities.GasSupervisory)
-            if ((response[4] & 4) == 4):
-                alarms.append(AlarmMemoryPriorities.GasTrouble)
-            if ((response[4] & 2) == 2):
-                alarms.append(AlarmMemoryPriorities.BurglarySupervisory)
-            if ((response[4] & 1) == 1):
-                alarms.append(AlarmMemoryPriorities.BurglaryTrouble)
-
-            area_by_id[data_id].alarms = alarms
-            response = response[6:]
-
     async def _req_data_status(
         self,
         status_command: Commands,
@@ -558,6 +527,34 @@ class Panel:
                 else:
                     data_by_id[data_id].status = status
                 response = response[3:]
+
+    async def _req_alarm_status_details(self, priority: AlarmMemoryPriorities, last_area=None, last_point=None):
+        data = [priority.value]
+        if last_area and last_point:
+            data = [priority.value, (last_area >> 8) & 0xFF, last_area & 0xFF, (last_point >> 8) & 0xFF, last_point & 0xFF]
+        response_detail = await self._xfer_packet(Commands.ReqAlarmMemoryDetail, 0xFE, [], data)
+        response_detail = response_detail[1:]
+        while response_detail:
+            area = (response_detail[0] << 8) + response_detail[1]
+            # item_type = response_detail[2]
+            point = (response_detail[3] << 8) + response_detail[4] 
+            if point == 0xFFFF:
+                await self._req_alarm_status_details(priority, area, point)
+            self.areas[area - 1].alarms.add(priority)
+            response_detail = response_detail[5:]
+    async def _req_alarm_status(
+        self
+    ):
+        response = await self._xfer_packet(Commands.ReqAlarmMemorySummary, 0xFE, [], [])
+        response = response[1:]
+        for priority in AlarmMemoryPriorities:
+            count = response[20-priority.value]
+            if count == 0:
+                for area in self.areas:
+                    area.alarms.discard(priority)
+            else:
+                await self._req_alarm_status_details(priority)
+                
 
     async def _req_areas(self):
         self.areas = []
@@ -607,7 +604,7 @@ class Panel:
         await self._xfer_packet(Commands.SetDoorState, 0xFC, [], [door.id, state])
 
     async def update_status(self):
-        await self._req_area_status()
+        await self._req_alarm_status()
         for area in self.areas:
             await self._req_data_status(
                 Commands.ReqPointStatus, [], area.points, PointStatus
@@ -616,6 +613,7 @@ class Panel:
         await self._req_data_status(
             Commands.ReqOutputStatus, [], self.outputs, OutputStatus
         )
+        
         if self.show_history:
             await self._req_history()
         return self
