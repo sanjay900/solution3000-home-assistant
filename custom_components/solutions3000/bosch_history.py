@@ -1,18 +1,17 @@
 def solutions_key(first_param):
         if first_param >= 1 and first_param <= 32:
             return "_User"
-        if first_param == 0:
-            return "_Quick"
-        if first_param == 994:
-            return "_PowerUp"
-        if first_param == 995:
-            return "_Telephone"
-        if first_param == 997:
-            return "_Schedule"
-        if first_param == 998:
-            return "_ALink"
-        if first_param == 999:
-            return "_Installer"
+        
+        param = [[0, "_Quick"],
+                [994, "PowerUp"],
+                [995, "_Telephone"],
+                [997, "_Schedule"],
+                [998, "_ALink"],
+                [999, "_Installer"]]
+        for p in param:
+            for i in param[p]:
+                if first_param == param[p][0]:
+                    return param[p][1]
         return ""
 def amax_conflict_source_key(first_param):
     if first_param >= 1 and first_param <= 64:
