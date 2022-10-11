@@ -139,27 +139,27 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
         return check
 
     async def async_alarm_disarm(self, code=None) -> None:
-        if self.check_code(code):
+        if not self.check_code(code):
             return
         """Send disarm command."""
         await self.coordinator.data.arm(ArmType.Disarmed, [self.area])
 
     async def async_alarm_arm_away(self, code=None) -> None:
-        if self.check_code(code):
+        if not self.check_code(code):
             return
         self.area.status = AreaStatus.AllOnExitDelay
         self.async_schedule_update_ha_state()
         await self.coordinator.data.arm(ArmType.Away, [self.area])
 
     async def async_alarm_arm_home(self, code=None) -> None:
-        if self.check_code(code):
+        if not self.check_code(code):
             return
         self.area.status = AreaStatus.PartOnExitDelay
         self.async_schedule_update_ha_state()
         await self.coordinator.data.arm(ArmType.Stay, [self.area])
 
     async def async_alarm_arm_night(self, code=None) -> None:
-        if self.check_code(code):
+        if not self.check_code(code):
             return
         self.area.status = AreaStatus.PartOnExitDelay
         self.async_schedule_update_ha_state()
