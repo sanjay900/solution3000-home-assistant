@@ -100,7 +100,6 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
             model=coordinator.data.panel_type_name(),
             name=f"{area.name}",
         )
-        self.check_code = False
         self._code = None
         if self.coordinator.data.requires_pin:
             self._code = str(self.coordinator.data.pincode)
