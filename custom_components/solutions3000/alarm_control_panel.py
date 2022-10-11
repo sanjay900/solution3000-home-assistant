@@ -13,6 +13,7 @@ from homeassistant.components.alarm_control_panel import (
     SUPPORT_ALARM_ARM_VACATION,
     SUPPORT_ALARM_TRIGGER,
 )
+import homeassistant.components.alarm_control_panel as alarm
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType
@@ -106,7 +107,7 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
         )
         self.check_code = False
         if self.coordinator.data.requires_pin:
-            self._attr_code_format = FORMAT_NUMBER
+            self._attr_code_format = alarm.CodeFormat.NUMBER
             self.check_code = True
 
     @property
