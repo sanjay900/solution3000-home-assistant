@@ -31,6 +31,7 @@
         "title": "Options",
         "data": {
           "show_history": "Pull the history from the panel.",
+          "require_pin": "Require pin to arm and disarm.",
           "history_count": "How many records should we pull from the history? Use 0 to pull all records."
         },
         "description": "History options"
