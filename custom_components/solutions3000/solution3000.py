@@ -301,7 +301,7 @@ class Output(Component):
 
 
 class Area(Component):
-    def __init__(self, id, name, points: list[Point]) -> None:
+    def __init__(self, id, name, points: "list[Point]") -> None:
         super().__init__(id, name, AreaStatus.Unknown)
         self.points = points
         self.alarms = set()
@@ -321,13 +321,14 @@ class HistoryMessage():
         return f"HistoryMessage(datetime={self.datetime}, message={self.message}, event_code={self.event_code})"
 
 class Panel:
-    areas: list[Area]
+    areas: "list[Area]"
 
     def __init__(
-        self, port: int, ip: str, pincode: str, show_history: bool, history_count: int
+        self, port: int, ip: str, pincode: str, show_history: bool, history_count: int, requires_pin: bool
     ) -> None:
         self.show_history = show_history
         self.history_count = history_count
+        self.requires_pin = requires_pin
         self.port = port
         self.ip = ip
         self.pincode = pincode
@@ -353,8 +354,8 @@ class Panel:
         self,
         command: Commands,
         expected_response: int,
-        command_format: list[int] = None,
-        data: Union[list[int], bytearray] = None,
+        command_format: "list[int]" = None,
+        data: "Union[list[int], bytearray]" = None,
     ):
         try:
             async with self.lock:
@@ -480,7 +481,7 @@ class Panel:
     async def _req_data_with_text(
         self,
         read_type: Commands,
-        read_type_data: list[int],
+        read_type_data: "list[int]",
         read_name: Commands,
         max: int,
     ):
@@ -505,7 +506,7 @@ class Panel:
     async def _req_data_status(
         self,
         status_command: Commands,
-        status_command_data: list[int],
+        status_command_data: "list[int]",
         data_container,
         enumeration: Union[Enum, None],
     ):
@@ -588,7 +589,7 @@ class Panel:
         )
         self.doors = list(map(lambda x: Door(x[0], x[1]), door_data))
 
-    async def arm(self, arm_type: ArmType, areas: list[Area]):
+    async def arm(self, arm_type: ArmType, areas: "list[Area]"):
         mask = 0
         for area in areas:
             mask |= 1 << (8-area.id)

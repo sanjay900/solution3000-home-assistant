@@ -18,7 +18,7 @@ from homeassistant.const import (
 )
 from homeassistant.data_entry_flow import FlowResult
 
-from .const import DOMAIN, CONF_HISTORY, CONF_HISTORY_COUNT
+from .const import CONF_REQUIRE_PIN, DOMAIN, CONF_HISTORY, CONF_HISTORY_COUNT
 
 class OptionsFlowHandler(OptionsFlow):
     def __init__(self, config_entry):
@@ -37,6 +37,10 @@ class OptionsFlowHandler(OptionsFlow):
                     vol.Required(
                         CONF_HISTORY,
                         default=self.config_entry.options.get(CONF_HISTORY),
+                    ): bool,
+                    vol.Required(
+                        CONF_REQUIRE_PIN,
+                        default=self.config_entry.options.get(CONF_REQUIRE_PIN),
                     ): bool,
 
                     vol.Required(
@@ -72,7 +76,8 @@ class Solution3000FlowHandler(ConfigFlow, domain=DOMAIN):
                     ip=user_input[CONF_IP_ADDRESS],
                     pincode=user_input[CONF_PIN],
                     show_history=False,
-                    history_count=20
+                    history_count=20,
+                    requires_pin=False
                 )
                 await panel.initialise()
                 await panel.close()

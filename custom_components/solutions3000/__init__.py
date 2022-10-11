@@ -12,7 +12,7 @@ from homeassistant.const import (
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .solution3000 import Panel, UserType, ArmType
-from .const import CONF_HISTORY, CONF_HISTORY_COUNT, DOMAIN, LOGGER, SERVICE_PANEL, SCAN_INTERVAL
+from .const import CONF_HISTORY, CONF_HISTORY_COUNT, CONF_REQUIRE_PIN, DOMAIN, LOGGER, SERVICE_PANEL, SCAN_INTERVAL
 
 # List of platforms to support. There should be a matching .py file for each,
 # eg <cover.py> and <sensor.py>
@@ -20,12 +20,16 @@ PLATFORMS: list[str] = [Platform.BINARY_SENSOR, Platform.ALARM_CONTROL_PANEL, Pl
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    requires_pin = False
+    if CONF_REQUIRE_PIN in entry.options:
+        requires_pin = entry.options[CONF_REQUIRE_PIN]
     panel = Panel(
         entry.data[CONF_PORT],
         entry.data[CONF_IP_ADDRESS],
         entry.data[CONF_PIN],
         entry.options[CONF_HISTORY],
-        entry.options[CONF_HISTORY_COUNT]
+        entry.options[CONF_HISTORY_COUNT],
+        requires_pin
     )
     await panel.initialise()
     panel_update: DataUpdateCoordinator[Panel] = DataUpdateCoordinator(
