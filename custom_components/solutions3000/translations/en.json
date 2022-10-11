@@ -15,6 +15,7 @@
           "port": "Port",
           "pin": "RSC+ User Code",
           "show_history": "Pull the history from the panel.",
+          "require_pin": "Require pin to arm and disarm.",
           "history_count": "How many records should we pull from the history? Use 0 to pull all records."
         },
         "description": "Set up a Solution 3000 panel to integrate with Home Assistant.",
