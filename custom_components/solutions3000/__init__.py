@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -12,8 +13,8 @@ from homeassistant.const import (
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .solution3000 import Panel, UserType, ArmType
-from .const import CONF_HISTORY, CONF_HISTORY_COUNT, CONF_REQUIRE_PIN, DOMAIN, LOGGER, SERVICE_PANEL, SCAN_INTERVAL
-
+from .const import CONF_HISTORY, CONF_HISTORY_COUNT, CONF_REQUIRE_PIN, DOMAIN, SERVICE_PANEL, SCAN_INTERVAL
+_LOGGER = logging.getLogger(__name__)
 # List of platforms to support. There should be a matching .py file for each,
 # eg <cover.py> and <sensor.py>
 PLATFORMS: list[str] = [Platform.BINARY_SENSOR, Platform.ALARM_CONTROL_PANEL, Platform.COVER, Platform.SWITCH]
@@ -34,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await panel.initialise()
     panel_update: DataUpdateCoordinator[Panel] = DataUpdateCoordinator(
         hass,
-        LOGGER,
+        _LOGGER,
         name=f"{DOMAIN}_{SERVICE_PANEL}",
         update_interval=SCAN_INTERVAL,
         update_method=panel.update_status,

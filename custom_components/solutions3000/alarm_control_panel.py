@@ -1,5 +1,6 @@
 """Support for Solution3000 sensors."""
 from __future__ import annotations
+import logging
 from .solution3000 import AlarmMemoryPriorities, ArmType, Area, AreaStatus, Panel
 from .const import DOMAIN
 
@@ -59,7 +60,7 @@ SOLUTIONS3000_TO_ALARM_STATE = {
     AreaStatus.AwayExitDelay: STATE_ALARM_ARMING,
     AreaStatus.AwayEntryDelay: STATE_ALARM_PENDING
 }
-
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -100,9 +101,16 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
             name=f"{area.name}",
         )
         self.check_code = False
+        self._code = None
         if self.coordinator.data.requires_pin:
-            self._attr_code_format = alarm.CodeFormat.NUMBER
-            self.check_code = True
+            self._code = str(self.coordinator.data.pincode)
+
+    @property
+    def code_format(self) -> alarm.CodeFormat | None:
+        """Return one or more digits/characters."""
+        if self._code is None:
+            return None
+        return alarm.CodeFormat.NUMBER
 
     @property
     def state(self) -> str | None:
@@ -121,29 +129,37 @@ class Solution3000ControlPanelEntity(CoordinatorEntity, AlarmControlPanelEntity)
             | SUPPORT_ALARM_ARM_AWAY
             | SUPPORT_ALARM_TRIGGER
         )
+    
+    def check_code(self, code):
+        if not self._code:
+            return True
+        check = str(code) == str(self._code)
+        if not check:
+            _LOGGER.warning("Invalid code given")
+        return check
 
     async def async_alarm_disarm(self, code=None) -> None:
-        if self.check_code and int(code) != self.coordinator.data.pincode:
+        if self.check_code(code):
             return
         """Send disarm command."""
         await self.coordinator.data.arm(ArmType.Disarmed, [self.area])
 
     async def async_alarm_arm_away(self, code=None) -> None:
-        if self.check_code and int(code) != self.coordinator.data.pincode:
+        if self.check_code(code):
             return
         self.area.status = AreaStatus.AllOnExitDelay
         self.async_schedule_update_ha_state()
         await self.coordinator.data.arm(ArmType.Away, [self.area])
 
     async def async_alarm_arm_home(self, code=None) -> None:
-        if self.check_code and int(code) != self.coordinator.data.pincode:
+        if self.check_code(code):
             return
         self.area.status = AreaStatus.PartOnExitDelay
         self.async_schedule_update_ha_state()
         await self.coordinator.data.arm(ArmType.Stay, [self.area])
 
     async def async_alarm_arm_night(self, code=None) -> None:
-        if self.check_code and int(code) != self.coordinator.data.pincode:
+        if self.check_code(code):
             return
         self.area.status = AreaStatus.PartOnExitDelay
         self.async_schedule_update_ha_state()
