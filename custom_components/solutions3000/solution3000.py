@@ -331,7 +331,7 @@ class Panel:
         self.requires_pin = requires_pin
         self.port = port
         self.ip = ip
-        self.pincode = pincode
+        self.pincode = str(pincode)
         self.panel_type = PanelType.Undefined
         self.rps_protocol_version = ProtocolVersion(0, 0, 0)
         self.intrusion_integration_protocol_version = ProtocolVersion(0, 0, 0)
