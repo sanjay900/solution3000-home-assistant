@@ -542,7 +542,10 @@ class Panel:
             point = (response_detail[3] << 8) + response_detail[4] 
             if point == 0xFFFF:
                 await self._req_alarm_status_details(priority, area, point)
-            area_by_id[area].alarms.add(priority)
+            if area in area_by_id:
+                area_by_id[area].alarms.add(priority)
+            else:
+                print(f"Found unknown area {area}, supported areas: [{area_by_id.keys()}]")
             response_detail = response_detail[5:]
     async def _req_alarm_status(
         self
